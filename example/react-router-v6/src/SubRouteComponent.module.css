@@ -1,0 +1,90 @@
+.section {
+    min-height: 80px;
+    border: 3px solid rgba(0, 0, 0, 0.5);
+    border-radius: 20px;
+    position: relative;
+    padding: 10px;
+    background-color: aliceblue;
+    margin: 20px 0px;
+}
+.section-title {
+    position: absolute;
+    top: -23px;
+    left: 20px;
+    transform: translateY(-50%);
+    background-color: rgba(125, 125, 125, 1);
+    padding: 5px;
+    border-radius: 10px;
+    color: #fff;
+}
+.section-body {
+    padding: 5px;
+    margin: 10px 0px;
+}
+.param-title {
+    position: absolute;
+    top: -25px;
+    left: 20px;
+    transform: translateY(-50%);
+    background-color: rgba(125, 125, 125, 1);
+    padding: 5px;
+    border-radius: 10px;
+    color: #fff;
+}
+
+.param-title .param-type {
+    font-family: monospace;
+    color: #22333B;
+}
+.param-container {
+    height: 100%;
+    border: 3px solid rgba(0, 0, 0, 0.5);
+    border-radius: 20px;
+    position: relative;
+    padding: 20px 10px;
+    background-color:#EAE0D5;
+    margin: 20px 0px;
+}
+.param-container div{
+    font-size: 0.8rem;
+    color: #333;
+    font-weight: 400;
+}
+.numbers {
+    min-height: 20px;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.numbers-controls {
+    height: 25px;
+    margin-top: 5px;
+}
+
+.input {
+    border-radius: 5px;
+    border: 2px solid #777;
+    color: #555;
+    margin-right: 8px;
+}
+
+.input:focus {
+    outline: 1px solid #888;
+}
+
+.button {
+    border-radius: 5px;
+    border: 1px solid #555;
+    color: #333;
+    margin-right: 8px;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.query {
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: monospace;
+    color: #555;
+}

@@ -1,0 +1,33 @@
+{
+  "name": "react-nav-query-params",
+  "version": "1.0.0",
+  "description": "A react library for easily managing typed url query parameters.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsup",
+    "start": "tsup src --dts --watch"
+  },
+  "keywords": [
+    "react",
+    "query",
+    "paramenters",
+    "hook"
+  ],
+  "author": "joshADE",
+  "license": "ISC",
+  "dependencies": {
+    "react-router-dom": "^6.4.2"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.21",
+    "@types/react-dom": "^18.0.6",
+    "tsup": "^6.3.0",
+    "typescript": "^4.8.4"
+  }
+}

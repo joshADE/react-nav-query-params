@@ -1,0 +1,13 @@
+.param-btn {
+    border-radius: 10px;
+    padding: 3px 10px;
+    border: 2px solid #444;
+    color: #333;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    position: absolute;
+    bottom: 0px;
+    right: 25px;
+    transform: translateY(50%);
+}
