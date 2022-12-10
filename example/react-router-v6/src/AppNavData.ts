@@ -4,13 +4,13 @@ import { createNavManager, activator } from 'react-nav-query-params';
 export const PageRoutingData = {
     root: { key: "root", route: "/", title: "Main" },
     home: { key: "home", route: "/home", title: "Home" },
-    components: { key: "components", route: "/components", title: "Components" },
+    people: { key: "people", route: "/people", title: "People" },
 }
 
 export const linkToOtherPages : { [type in PageType]: Exclude<PageType, type>[] } = {
-    root: ["components", "home"],
+    root: ["people", "home"],
     home: ["root"],
-    components: ["root", 'home'],
+    people: ["root", 'home'],
 }  
 
 export type PageType = keyof typeof PageRoutingData;
@@ -30,7 +30,7 @@ export interface RouteMapping  {
         openModal: boolean;
         defaultViewCount: number;
     },
-    "components": {
+    "people": {
         trigger: "first" | "second" | "third";
         name: string;
     }
@@ -43,7 +43,7 @@ const routeMapping = activator<RouteMapping>({
             numbers: [1], // array types must have one entry in sample and the type of the entry will be the value type
             focus: "home",
             salutation: "Jo",
-            display: { components: true }, // object types must have one entry in sample and the type of the entry will be the value type
+            display: { people: true }, // object types must have one entry in sample and the type of the entry will be the value type
         },
         programmaticNavigate: true, // only read the query params for this route when naviating programmatically
     },
@@ -53,7 +53,7 @@ const routeMapping = activator<RouteMapping>({
             defaultViewCount: 1,
         },
     },
-    "components": {
+    "people": {
         sample: {
             trigger: "first",
             name: "Joe",

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
 import { PageType, PageRoutingData, linkToOtherPages, useNavQueryParams } from './AppNavData';
 import styles from "./RouterPage.module.css"
-import { CompComponent, HomeComponent, RootComponent } from './SubRouteComponents';
+import { PeopleComponent, HomeComponent, RootComponent } from './SubRouteComponents';
 
 interface Props {
     type: PageType,
@@ -12,15 +12,15 @@ const RouterPage = ({
 }:Props) => {
     const { getQueryParams: getQueryParamsRoot, clearQueryParams: clearQueryParamsRoot  } = useNavQueryParams("root");
     const { getQueryParams: getQueryParamsHome, clearQueryParams: clearQueryParamsHome  } = useNavQueryParams("home");
-    const { getQueryParams: getQueryParamsComp, clearQueryParams: clearQueryParamsComp  } = useNavQueryParams("components");
+    const { getQueryParams: getQueryParamsPeople, clearQueryParams: clearQueryParamsPeople  } = useNavQueryParams("people");
 
     useEffect(() => {
         console.log("root:", getQueryParamsRoot());
         clearQueryParamsRoot();
         console.log("home:", getQueryParamsHome());
         clearQueryParamsHome();
-        console.log("components:", getQueryParamsComp());
-        clearQueryParamsComp();
+        console.log("people:", getQueryParamsPeople());
+        clearQueryParamsPeople();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
@@ -30,8 +30,8 @@ const RouterPage = ({
                 return <RootComponent key={t} />;
             case "home":
                 return <HomeComponent key={t} />;
-            case "components":
-                return <CompComponent key={t} />;
+            case "people":
+                return <PeopleComponent key={t} />;
             default:
                 return <></>;
         }

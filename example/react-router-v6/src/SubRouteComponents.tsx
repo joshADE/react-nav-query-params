@@ -10,8 +10,8 @@ const RootComponent = () => {
   const { title, route } = PageRoutingData[type];
   const { getQueryString: getQueryStringRoot  } = useNavQueryParams(type);
 
-  const [focus, setFocus] = useState<RouteMapping["root"]["focus"]>("components");
-  const [display, setDisplay] = useState<RouteMapping["root"]["display"]>({ components: true });
+  const [focus, setFocus] = useState<RouteMapping["root"]["focus"]>("people");
+  const [display, setDisplay] = useState<RouteMapping["root"]["display"]>({ people: true });
   const [numbers, setNumbers] = useState<RouteMapping["root"]["numbers"]>([10]);
   const [newNumber, setNewNumber] = useState<string>("0");
 
@@ -166,18 +166,18 @@ const HomeComponent = () => {
   )
 }
 
-const CompComponent = () => {
-  const type = "components";
+const PeopleComponent = () => {
+  const type = "people";
 
   const { title, route } = PageRoutingData[type];
-  const { getQueryString: getQueryStringComponents} = useNavQueryParams(type);
+  const { getQueryString: getQueryStringPeople} = useNavQueryParams(type);
 
-  const [name, setName] = useState<RouteMapping["components"]["name"]>("John");
-  const [trigger, setTrigger] = useState<RouteMapping["components"]["trigger"]>("first");
+  const [name, setName] = useState<RouteMapping["people"]["name"]>("John");
+  const [trigger, setTrigger] = useState<RouteMapping["people"]["trigger"]>("first");
 
   const queryString = useMemo(() => {
-    return getQueryStringComponents({ name, trigger  }, { replaceAllParams: true});
-  }, [name, getQueryStringComponents, trigger])
+    return getQueryStringPeople({ name, trigger  }, { replaceAllParams: true});
+  }, [name, getQueryStringPeople, trigger])
  
 
   return (
@@ -219,4 +219,4 @@ const CompComponent = () => {
   )
 }
 
-export { RootComponent, HomeComponent, CompComponent }
+export { RootComponent, HomeComponent, PeopleComponent }
