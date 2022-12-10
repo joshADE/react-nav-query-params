@@ -43,7 +43,7 @@ const routeMapping = activator<RouteMapping>({
             numbers: [1], // array types must have one entry in sample and the type of the entry will be the value type
             focus: "home",
             salutation: "Jo",
-            display: { components: true }, // mapped object types must have one entry in sample and the type of the entry will be the value type
+            display: { components: true }, // object types must have one entry in sample and the type of the entry will be the value type
         },
         programmaticNavigate: true, // only read the query params for this route when naviating programmatically
     },
@@ -66,9 +66,9 @@ export const { NavQueryContext, useNavQueryParams } = createNavManager(
     {}, 
     {
         encodingMap: {
-            "advanced-record": {
+            "record": {
                 encode: (v, o) => {
-                    const oS = o?.['advanced-record']?.objectStartSeparator ?? "+";
+                    const oS = o?.['record']?.objectStartSeparator ?? "+";
                     return oS + "test";
                 },
                 decode: (v, o) => {
@@ -78,7 +78,7 @@ export const { NavQueryContext, useNavQueryParams } = createNavManager(
             }
         },
         encodingOptions: {
-            "advanced-record": {
+            "record": {
                 objectEndSeperator: "}",
                 objectStartSeparator: "{",
                 entrySeperator: ",",
@@ -86,5 +86,5 @@ export const { NavQueryContext, useNavQueryParams } = createNavManager(
             }
         }
     }
-    );
+);
 

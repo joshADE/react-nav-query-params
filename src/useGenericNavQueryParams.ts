@@ -40,43 +40,45 @@ export type EncodingMapValue<T, O> = {
     decode: (value: string, sampleSimpleValue: unknown, options?: O) => T;
     defaultValue?: T;
 }
-export type AdvancedEncodingKeyToTypeMapping = {
-    "advanced-array": Array<SimpleRouteParamPropertyType>;
-    "advanced-record": Record<string, SimpleRouteParamPropertyType>;
+export type ComplexEncodingKeyToTypeMapping = {
+    "array": Array<SimpleRouteParamPropertyType>;
+    "record": Record<string, SimpleRouteParamPropertyType>;
     "date": Date;
 }
 
-export type AdvancedEncodingOptions<T extends keyof AdvancedEncodingKeyToTypeMapping> = Partial<{[key in T]: unknown}> & {
-    "advanced-array": { itemSeperator: string; }
-    "advanced-record": { keyValueSeperator: string; objectStartSeparator: string; objectEndSeperator: string; entrySeperator: string }
+export type ComplexEncodingKey = keyof ComplexEncodingKeyToTypeMapping;
+
+export type ComplexEncodingOptions<T extends ComplexEncodingKey> = Partial<{[key in T]: unknown}> & {
+    "array": { itemSeperator: string; }
+    "record": { keyValueSeperator: string; objectStartSeparator: string; objectEndSeperator: string; entrySeperator: string }
     "date": { hyphenSeperator: string; }
 }
 
-export const EncodingMap : {[key in keyof AdvancedEncodingKeyToTypeMapping]: EncodingMapValue<AdvancedEncodingKeyToTypeMapping[key], Partial<AdvancedEncodingOptions<key>> >} = {
-    "advanced-array": {
+export const EncodingMap : {[key in ComplexEncodingKey]: EncodingMapValue<ComplexEncodingKeyToTypeMapping[key], Partial<ComplexEncodingOptions<key>> >} = {
+    "array": {
         encode: (value, options) => {
-            return value.join(options?.["advanced-array"]?.itemSeperator ?? ",");
+            return value.join(options?.["array"]?.itemSeperator ?? ",");
         },
         decode: (value, sampleSimpleValue, options) => {
-            return value.split(options?.["advanced-array"]?.itemSeperator ?? ",").map(v => simpleTypeConvert(v, sampleSimpleValue));
+            return value.split(options?.["array"]?.itemSeperator ?? ",").map(v => simpleTypeConvert(v, sampleSimpleValue));
         },
         defaultValue: []
     },
-    "advanced-record": {
+    "record": {
         encode: (value, options) => {
             const newObject = Object.fromEntries(Object.entries(value as object).map(([k, v]) => ([k, String(v)])));
-            const objectStartSeparator = options?.["advanced-record"]?.objectStartSeparator ?? "<";
-            const objectEndSeperator = options?.["advanced-record"]?.objectEndSeperator ?? ">";
-            const entrySeperator = options?.["advanced-record"]?.entrySeperator ?? ",";
-            const keyValueSeperator = options?.["advanced-record"]?.keyValueSeperator ?? ":";
+            const objectStartSeparator = options?.["record"]?.objectStartSeparator ?? "<";
+            const objectEndSeperator = options?.["record"]?.objectEndSeperator ?? ">";
+            const entrySeperator = options?.["record"]?.entrySeperator ?? ",";
+            const keyValueSeperator = options?.["record"]?.keyValueSeperator ?? ":";
             const encoded = objectStartSeparator + Object.entries(newObject).map(([k, v]) => (`${k}${keyValueSeperator}${v}`)).join(entrySeperator) + objectEndSeperator; // { result }
             return encoded;
         },
         decode: (value, sampleSimpleValue, options) => {
-            const objectStartSeparator = options?.["advanced-record"]?.objectStartSeparator ?? "<";
-            const objectEndSeperator = options?.["advanced-record"]?.objectEndSeperator ?? ">";
-            const entrySeperator = options?.["advanced-record"]?.entrySeperator ?? ",";
-            const keyValueSeperator = options?.["advanced-record"]?.keyValueSeperator ?? ":";
+            const objectStartSeparator = options?.["record"]?.objectStartSeparator ?? "<";
+            const objectEndSeperator = options?.["record"]?.objectEndSeperator ?? ">";
+            const entrySeperator = options?.["record"]?.entrySeperator ?? ",";
+            const keyValueSeperator = options?.["record"]?.keyValueSeperator ?? ":";
             let trimmed = value.startsWith(objectStartSeparator) ? value.slice(objectStartSeparator.length, value.length) : value;
             trimmed = trimmed.endsWith(objectEndSeperator) ? trimmed.slice(0, trimmed.length - objectEndSeperator.length) : trimmed;
             const entries = trimmed.split(entrySeperator);
@@ -108,9 +110,10 @@ export const EncodingMap : {[key in keyof AdvancedEncodingKeyToTypeMapping]: Enc
     }
 }
 
-export type AdvancedRouteParamPropertyType = AdvancedEncodingKeyToTypeMapping[keyof AdvancedEncodingKeyToTypeMapping];//Record<string, ValidRouteParamPropertyType> | Array<ValidRouteParamPropertyType> | Date;
+// Record<string, ValidRouteParamPropertyType> | Array<ValidRouteParamPropertyType> | Date;
+export type ComplexRouteParamPropertyType = ComplexEncodingKeyToTypeMapping[keyof ComplexEncodingKeyToTypeMapping];
 
-export type ValidRouteParamPropertyType = SimpleRouteParamPropertyType | AdvancedRouteParamPropertyType;
+export type ValidRouteParamPropertyType = SimpleRouteParamPropertyType | ComplexRouteParamPropertyType;
 
 type FilterInvalidProperty<S> = {
     [key in keyof S]: S[key] extends ValidRouteParamPropertyType ? key : never;
@@ -141,7 +144,7 @@ export type RouteMappingGlobalOptions = {
 
 export type RouteMappingConfiguration = {
     encodingMap?: Partial<EncodingMapType>;
-    encodingOptions?: Partial<AdvancedEncodingOptions<keyof AdvancedEncodingKeyToTypeMapping>>;
+    encodingOptions?: Partial<ComplexEncodingOptions<ComplexEncodingKey>>;
 }
 
 export type QueryStringOptions = {
@@ -215,16 +218,16 @@ export default <T>(routeMapping: RouteParamBaseType<T>, initialOptions: RouteMap
                     params.set(key, String(value));
                 }else  if (Array.isArray(value)){
                     // array of above types
-                    params.set(key, encodingMap["advanced-array"].encode(value as AdvancedEncodingKeyToTypeMapping["advanced-array"], encodingOptions));
+                    params.set(key, encodingMap["array"].encode(value as ComplexEncodingKeyToTypeMapping["array"], encodingOptions));
                 }else if (value instanceof Date){
                     const d = new Date(value as Date);
-                    params.set(key, encodingMap["date"].encode(d as AdvancedEncodingKeyToTypeMapping["date"], encodingOptions));
+                    params.set(key, encodingMap["date"].encode(d as ComplexEncodingKeyToTypeMapping["date"], encodingOptions));
                 }else if (value === undefined || value === null){
                     result = "null";
                 }else{
                     // record with values as the above types
                     // provide default encoding
-                    params.set(key, encodingMap["advanced-record"].encode(value as AdvancedEncodingKeyToTypeMapping["advanced-record"], encodingOptions));
+                    params.set(key, encodingMap["record"].encode(value as ComplexEncodingKeyToTypeMapping["record"], encodingOptions));
                 }
                 
             });
@@ -254,7 +257,7 @@ export default <T>(routeMapping: RouteParamBaseType<T>, initialOptions: RouteMap
                     if (Array.isArray(value)){
                         // array of above types
                         const sampleSimpleValue = value.length > 0 ? value[0] : "sample";
-                        result[key] = encodingMap["advanced-array"].decode(stringRouteValue, sampleSimpleValue, encodingOptions);
+                        result[key] = encodingMap["array"].decode(stringRouteValue, sampleSimpleValue, encodingOptions);
                         return;
                     }else if (value instanceof Date){
                         result[key] = encodingMap["date"].decode(stringRouteValue, value, encodingOptions);
@@ -264,7 +267,7 @@ export default <T>(routeMapping: RouteParamBaseType<T>, initialOptions: RouteMap
                         // provide default encoding
                         const sampleSimpleValues = Object.values(value as Object);
                         const sampleSimpleValue = sampleSimpleValues.length > 0 ? sampleSimpleValues[0] : "sample";
-                        result[key] = encodingMap["advanced-record"].decode(stringRouteValue, sampleSimpleValue, encodingOptions);
+                        result[key] = encodingMap["record"].decode(stringRouteValue, sampleSimpleValue, encodingOptions);
                         return;
                     } else {
                         return null;
