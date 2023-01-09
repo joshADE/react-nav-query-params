@@ -10,7 +10,10 @@ const router = createBrowserRouter(Object.entries(PageRoutingData).map(([key, va
     path: route,
     element: <RouterPage key={tyepKey} type={tyepKey} />
   };
-}))
+}), 
+{ 
+  basename: window.location.href.includes("github") ? '/react-nav-query-params/' : '/' // for deployment to gh-pages to load resources 
+})
 
 const App = () => {
 
