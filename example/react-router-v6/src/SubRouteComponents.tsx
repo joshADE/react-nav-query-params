@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavQueryParams, PageRoutingData, RouteMapping, linkToOtherPages } from './AppNavData';
 import Button from './Button';
 import styles2 from "./SubRouteComponent.module.css";
@@ -8,7 +8,10 @@ const RootComponent = () => {
   const type = "root";
 
   const { title, route } = PageRoutingData[type];
-  const { getQueryString: getQueryStringRoot  } = useNavQueryParams(type);
+  const { getQueryString: getQueryStringRoot, clearQueryParams: clearQueryParamsRoot } = useNavQueryParams(type);
+  useEffect(() => {
+    clearQueryParamsRoot();
+  }, [clearQueryParamsRoot]);
 
   const [focus, setFocus] = useState<RouteMapping["root"]["focus"]>("people");
   const [display, setDisplay] = useState<RouteMapping["root"]["display"]>({ people: true });
@@ -121,7 +124,10 @@ const HomeComponent = () => {
   const type = "home";
   
   const { title, route } = PageRoutingData[type];
-  const { getQueryString: getQueryStringHome } = useNavQueryParams(type);
+  const { getQueryString: getQueryStringHome, clearQueryParams: clearQueryParamsHome } = useNavQueryParams(type);
+  useEffect(() => {
+    clearQueryParamsHome();
+  }, [clearQueryParamsHome]);
 
   const [defaultViewCount, setDefaultViewCount] = useState<RouteMapping["home"]["defaultViewCount"]>(1);
   const [openModal, setOpenModal] = useState<RouteMapping["home"]["openModal"]>(false);
@@ -170,8 +176,11 @@ const PeopleComponent = () => {
   const type = "people";
 
   const { title, route } = PageRoutingData[type];
-  const { getQueryString: getQueryStringPeople} = useNavQueryParams(type);
-
+  const { getQueryString: getQueryStringPeople, clearQueryParams: clearQueryParamsPeople } = useNavQueryParams(type);
+  useEffect(() => {
+    clearQueryParamsPeople();
+  }, [clearQueryParamsPeople]);
+  
   const [name, setName] = useState<RouteMapping["people"]["name"]>("John");
   const [trigger, setTrigger] = useState<RouteMapping["people"]["trigger"]>("first");
 

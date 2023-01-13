@@ -10,17 +10,17 @@ interface Props {
 const RouterPage = ({
     type,
 }:Props) => {
-    const { getQueryParams: getQueryParamsRoot, clearQueryParams: clearQueryParamsRoot  } = useNavQueryParams("root");
-    const { getQueryParams: getQueryParamsHome, clearQueryParams: clearQueryParamsHome  } = useNavQueryParams("home");
-    const { getQueryParams: getQueryParamsPeople, clearQueryParams: clearQueryParamsPeople  } = useNavQueryParams("people");
+    const { getQueryParams: getQueryParamsRoot  } = useNavQueryParams("root");
+    const { getQueryParams: getQueryParamsHome } = useNavQueryParams("home");
+    const { getQueryParams: getQueryParamsPeople  } = useNavQueryParams("people");
 
     useEffect(() => {
         console.log("root:", getQueryParamsRoot());
-        clearQueryParamsRoot();
+        
         console.log("home:", getQueryParamsHome());
-        clearQueryParamsHome();
+        
         console.log("people:", getQueryParamsPeople());
-        clearQueryParamsPeople();
+        
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
@@ -45,7 +45,7 @@ const RouterPage = ({
         </div>
         <div className={styles["container"]}>
             <h3>Navigate To:</h3>
-
+            <p>(Check the console to see the decoded query paramas from the last visited page)</p>
             <div className={styles["navigations"]}>
                 {linkToOtherPages[type].map(elem => {
                     return (getSubRouteComponenet(elem));
