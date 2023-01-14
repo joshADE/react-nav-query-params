@@ -147,10 +147,15 @@ export type RouteMappingConfiguration = {
     encodingOptions?: Partial<ComplexEncodingOptions<ComplexEncodingKey>>;
 }
 
-export type QueryStringOptions = {
+export type QueryStringOptions<T, K extends keyof T, S extends keyof GetValueTypeOfKeyProperty<T, K>> = {
     full?: boolean;
     replaceAllParams?: boolean;
+    keyOrder?: Partial<Record<S, number>>;
+}
 
+export type ClearQueryStringOptions<T, K extends keyof T, S extends keyof GetValueTypeOfKeyProperty<T, K>> = {
+    include?: S[];
+    exclude?: S[];
 }
 
 
@@ -207,12 +212,15 @@ export default <T>(routeMapping: RouteParamBaseType<T>, initialOptions: RouteMap
 
         const query = useMemo(() => new URLSearchParams(search), [search]);
 
-        const getQueryString = useCallback((newParams: Partial<GetValueTypeOfKeyProperty<T, K>>, options: QueryStringOptions = {}) => {
+        const getQueryString = useCallback((newParams: Partial<GetValueTypeOfKeyProperty<T, K>>, options: QueryStringOptions<T, K, keyof GetValueTypeOfKeyProperty<T, K>> = {}) => {
             let result = options?.full ? "?": "";
 
             const params = new URLSearchParams(options?.replaceAllParams ? {} : query);
 
-            Object.entries(newParams).forEach(([key, value]) => {
+            const keyOrders = options?.keyOrder ?? {};
+            Object.entries(newParams)
+            .sort(([keyA],[keyB]) => (keyOrders[keyA] ?? 0 - keyOrders[keyB] ?? 0))
+            .forEach(([key, value]) => {
                 const type = typeof value;
                 if (["string", "number", "bigint", "boolean"].includes(type)){
                     params.set(key, String(value));
@@ -278,11 +286,22 @@ export default <T>(routeMapping: RouteParamBaseType<T>, initialOptions: RouteMap
             return result;
         }, [ignoreQueryParams]);
 
-        const clearQueryParams = useCallback(() => {
+        const clearQueryParams = useCallback((options: ClearQueryStringOptions<T, K, keyof GetValueTypeOfKeyProperty<T, K>> = {}) => {
+            const clearMap = {};
+            let shouldFilter = false;
+
+            if (options?.include || options?.exclude){
+                shouldFilter = true;
+                options?.include?.reduce((sum, k) => ({...sum, [k]: true }), clearMap);
+                options?.exclude?.reduce((sum, k) => ({...sum, [k]: false}), clearMap);
+            }
+
             setSearchParams(oldParams => {
                 const params = new URLSearchParams(oldParams);
                 Object.keys(routeMapping[key].sample).forEach((key) => {
-                    params.delete(key);
+                    if (!shouldFilter || (shouldFilter && clearMap[key])){
+                        params.delete(key);
+                    }
                 });
                 return params;
             })

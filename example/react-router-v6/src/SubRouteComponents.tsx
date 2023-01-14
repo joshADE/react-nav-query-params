@@ -178,14 +178,14 @@ const PeopleComponent = () => {
   const { title, route } = PageRoutingData[type];
   const { getQueryString: getQueryStringPeople, clearQueryParams: clearQueryParamsPeople } = useNavQueryParams(type);
   useEffect(() => {
-    clearQueryParamsPeople();
+    clearQueryParamsPeople({ exclude: ['name']});
   }, [clearQueryParamsPeople]);
   
   const [name, setName] = useState<RouteMapping["people"]["name"]>("John");
   const [trigger, setTrigger] = useState<RouteMapping["people"]["trigger"]>("first");
 
   const queryString = useMemo(() => {
-    return getQueryStringPeople({ name, trigger  }, { replaceAllParams: true});
+    return getQueryStringPeople({ name, trigger  }, { replaceAllParams: true, keyOrder: { trigger: -1 }});
   }, [name, getQueryStringPeople, trigger])
  
 
