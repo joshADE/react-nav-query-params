@@ -71,7 +71,7 @@ export const { NavQueryContext, useNavQueryParams } = createNavManager(
                     const oS = o?.['record']?.objectStartSeparator ?? "+";
                     return oS + "test";
                 },
-                decode: (v, o) => {
+                decode: (v) => {
                     return {}
                 },
                 defaultValue: {}

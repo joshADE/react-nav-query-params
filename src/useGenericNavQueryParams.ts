@@ -4,7 +4,7 @@ import { useLocation, useSearchParams } from "react-router-dom";
 function isIsoDate(str: string) {
     if (!/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/.test(str)) return false;
     const d = new Date(str); 
-    return d instanceof Date && !isNaN(Number(d.toISOString())) && d.toISOString()===str; // valid date 
+    return d instanceof Date && d.toISOString()===str; // valid date 
 }
 
 export type SimpleRouteParamPropertyType = string | number | bigint | boolean | null;
@@ -51,7 +51,7 @@ export type ComplexEncodingKey = keyof ComplexEncodingKeyToTypeMapping;
 export type ComplexEncodingOptions<T extends ComplexEncodingKey> = Partial<{[key in T]: unknown}> & {
     "array": { itemSeperator: string; }
     "record": { keyValueSeperator: string; objectStartSeparator: string; objectEndSeperator: string; entrySeperator: string }
-    "date": { hyphenSeperator: string; }
+    "date": { hyphenSeperator: string; colonSeperator: string }
 }
 
 export const EncodingMap : {[key in ComplexEncodingKey]: EncodingMapValue<ComplexEncodingKeyToTypeMapping[key], Partial<ComplexEncodingOptions<key>> >} = {
@@ -100,12 +100,21 @@ export const EncodingMap : {[key in ComplexEncodingKey]: EncodingMapValue<Comple
         defaultValue: new Date(),
         encode: (value, options) => {
             const hyphenSeperator = options?.["date"]?.hyphenSeperator ?? "-";
-            return value.toISOString().replace("-", hyphenSeperator);
+            const colonSeperator = options?.["date"]?.colonSeperator ?? ":";
+            return value.toISOString().replace("-", hyphenSeperator).replace(":", colonSeperator);
         },
         decode: (value, sampleSimpleValue, options) => {
             const hyphenSeperator = options?.["date"]?.hyphenSeperator ?? "-";
-            const newValue = value.replace(hyphenSeperator, "-");
-            return (sampleSimpleValue) ? isIsoDate(newValue) ? new Date(newValue) : EncodingMap.date.defaultValue ?? new Date() : sampleSimpleValue as Date;
+            const colonSeperator = options?.["date"]?.colonSeperator ?? ":";
+            let newValue = value.replace(hyphenSeperator, "-");
+            newValue = newValue.replace(colonSeperator, ":");
+            if (isIsoDate(newValue)){
+                return new Date(newValue);
+            } else if (EncodingMap.date.defaultValue){
+                return EncodingMap.date.defaultValue;
+            } else {
+                return sampleSimpleValue as Date; 
+            }
         },
     }
 }
@@ -252,6 +261,7 @@ export default <T>(routeMapping: RouteParamBaseType<T>, initialOptions: RouteMap
             const params = new URLSearchParams(query);
             Object.entries(routeMapping[key].sample).forEach(([key, value]) => {
                 const stringRouteValue = params.get(key);
+                
                 if (stringRouteValue) {
                     // check if simple type
                     const output = simpleTypeConvert(stringRouteValue, value);
@@ -268,6 +278,7 @@ export default <T>(routeMapping: RouteParamBaseType<T>, initialOptions: RouteMap
                         result[key] = encodingMap["array"].decode(stringRouteValue, sampleSimpleValue, encodingOptions);
                         return;
                     }else if (value instanceof Date){
+                        console.log(stringRouteValue);
                         result[key] = encodingMap["date"].decode(stringRouteValue, value, encodingOptions);
                         return;
                     } else if (type === "object" && stringRouteValue !== "null" && stringRouteValue !== "undefined"){
