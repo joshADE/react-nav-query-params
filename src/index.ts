@@ -1,9 +1,12 @@
 export {
     default as createNavManager,
-    activator, 
-    GetValueTypeOfKeyProperty, 
-    QueryStringOptions, 
-    RouteParamBaseType, 
-    ValidRouteParamPropertyType 
 } from "./useGenericNavQueryParams";
+
+export {
+  activator,
+  GetValueTypeOfKeyProperty,
+  QueryStringOptions,
+  RouteParamBaseType,
+  ValidRouteParamPropertyType,
+} from "./types";
 

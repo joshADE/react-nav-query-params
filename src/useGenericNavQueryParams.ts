@@ -1,338 +1,299 @@
 import { useMemo, createContext, useContext, useCallback } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
+import { validTypeMap } from "./data";
+import {
+  ClearQueryParamsOptions,
+  GetQueryParamsResult,
+  GetValueTypeOfKeyProperty,
+  ParsingErrorResultType,
+  QueryStringOptions,
+  RouteMappingGlobalOptions,
+  RouteParamBaseType,
+  ValidRouteParamPropertyTypeKeys,
+  RouteMappingCustomSetting,
+  RouteMappingConfiguration,
+  activator as untypedActivator,
+  GetQueryParamsOptions,
+} from "./types";
+import { findTypeKeyOfString } from "./utils";
 
-function isIsoDate(str: string) {
-    if (!/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/.test(str)) return false;
-    const d = new Date(str); 
-    return d instanceof Date && d.toISOString()===str; // valid date 
-}
+let loadedByUser = true;
 
-export type SimpleRouteParamPropertyType = string | number | bigint | boolean | null;
+export default <M extends {} = {}>(
+  customSettings: RouteMappingCustomSetting<M>
+) => {
+  const activator = <T extends {}>(v: RouteParamBaseType<T, M>) => untypedActivator<T, M>(v);
 
-export function simpleTypeConvert(stringRouteValue :string, sample :unknown) {
-    switch(typeof sample){
-        case "number":
-            const numberValue = Number(stringRouteValue);
-            if (numberValue !== null && numberValue !== undefined && !isNaN(numberValue)) {
-                return numberValue;
-            }
-        case "bigint":
-            try {
-                const bigIntValue = BigInt(stringRouteValue);
-                if (bigIntValue !== null && bigIntValue !== undefined && typeof bigIntValue === "bigint") {
-                    return bigIntValue;
+  const creator = <T extends {}>(
+    routeMapping: RouteParamBaseType<T, M>,
+    initialOptions: RouteMappingGlobalOptions = {},
+    configurations: RouteMappingConfiguration = {}
+  ) => {
+    const NavQueryContext =
+      createContext<Partial<RouteMappingGlobalOptions>>(initialOptions);
+
+    const validTypeMapWithOverrides =
+      configurations?.validTypeEncodingMapOverride
+        ? (Object.fromEntries(
+            Object.entries(validTypeMap).map(([key, value]) => {
+              const typeKey = key as ValidRouteParamPropertyTypeKeys;
+              const typeMapOverride =
+                configurations.validTypeEncodingMapOverride!;
+              if (typeMapOverride[typeKey] !== undefined) {
+                const overrides = typeMapOverride[typeKey]!;
+                const { defaultValue, decode, encode } = overrides;
+                if (
+                  decode !== null &&
+                  decode !== undefined &&
+                  encode !== null &&
+                  encode !== undefined
+                ) {
+                  value.encodingMap.decode = decode;
+                  value.encodingMap.encode = encode;
                 }
-            } catch (e) {}
-        case "boolean":
-            return stringRouteValue === "true";
-        case "string":
-            if (stringRouteValue === "null" || stringRouteValue === "undefined"){
-                return null;
-            }
-            return stringRouteValue;
-        default:
-        }
-        return null;
-}
-
-export type EncodingMapValue<T, O> = {
-    encode: (value: T, options?: O) => string;
-    decode: (value: string, sampleSimpleValue: unknown, options?: O) => T;
-    defaultValue?: T;
-}
-export type ComplexEncodingKeyToTypeMapping = {
-    "array": Array<SimpleRouteParamPropertyType>;
-    "record": Record<string, SimpleRouteParamPropertyType>;
-    "date": Date;
-}
-
-export type ComplexEncodingKey = keyof ComplexEncodingKeyToTypeMapping;
-
-export type ComplexEncodingOptions<T extends ComplexEncodingKey> = Partial<{[key in T]: unknown}> & {
-    "array": { itemSeperator: string; }
-    "record": { keyValueSeperator: string; objectStartSeparator: string; objectEndSeperator: string; entrySeperator: string }
-    "date": { hyphenSeperator: string; colonSeperator: string }
-}
-
-export const EncodingMap : {[key in ComplexEncodingKey]: EncodingMapValue<ComplexEncodingKeyToTypeMapping[key], Partial<ComplexEncodingOptions<key>> >} = {
-    "array": {
-        encode: (value, options) => {
-            return value.join(options?.["array"]?.itemSeperator ?? ",");
-        },
-        decode: (value, sampleSimpleValue, options) => {
-            return value.split(options?.["array"]?.itemSeperator ?? ",").map(v => simpleTypeConvert(v, sampleSimpleValue));
-        },
-        defaultValue: []
-    },
-    "record": {
-        encode: (value, options) => {
-            const newObject = Object.fromEntries(Object.entries(value as object).map(([k, v]) => ([k, String(v)])));
-            const objectStartSeparator = options?.["record"]?.objectStartSeparator ?? "<";
-            const objectEndSeperator = options?.["record"]?.objectEndSeperator ?? ">";
-            const entrySeperator = options?.["record"]?.entrySeperator ?? ",";
-            const keyValueSeperator = options?.["record"]?.keyValueSeperator ?? ":";
-            const encoded = objectStartSeparator + Object.entries(newObject).map(([k, v]) => (`${k}${keyValueSeperator}${v}`)).join(entrySeperator) + objectEndSeperator; // { result }
-            return encoded;
-        },
-        decode: (value, sampleSimpleValue, options) => {
-            const objectStartSeparator = options?.["record"]?.objectStartSeparator ?? "<";
-            const objectEndSeperator = options?.["record"]?.objectEndSeperator ?? ">";
-            const entrySeperator = options?.["record"]?.entrySeperator ?? ",";
-            const keyValueSeperator = options?.["record"]?.keyValueSeperator ?? ":";
-            let trimmed = value.startsWith(objectStartSeparator) ? value.slice(objectStartSeparator.length, value.length) : value;
-            trimmed = trimmed.endsWith(objectEndSeperator) ? trimmed.slice(0, trimmed.length - objectEndSeperator.length) : trimmed;
-            const entries = trimmed.split(entrySeperator);
-            const newObject = Object.fromEntries(entries.map(s => { 
-                const splitEntry = s.split(keyValueSeperator);
-                const len = splitEntry.length;
-                if (len >= 2){
-                    return [splitEntry[0], simpleTypeConvert(splitEntry[1], sampleSimpleValue)];
-                }else {
-                    return [splitEntry[0], null];
+                if (defaultValue !== null && defaultValue !== undefined) {
+                  value.deafultValue = defaultValue;
                 }
-            }));
-            return newObject;
-
-        },
-        defaultValue: {}
-    },
-    "date": {
-        defaultValue: new Date(),
-        encode: (value, options) => {
-            const hyphenSeperator = options?.["date"]?.hyphenSeperator ?? "-";
-            const colonSeperator = options?.["date"]?.colonSeperator ?? ":";
-            return value.toISOString().replace("-", hyphenSeperator).replace(":", colonSeperator);
-        },
-        decode: (value, sampleSimpleValue, options) => {
-            const hyphenSeperator = options?.["date"]?.hyphenSeperator ?? "-";
-            const colonSeperator = options?.["date"]?.colonSeperator ?? ":";
-            let newValue = value.replace(hyphenSeperator, "-");
-            newValue = newValue.replace(colonSeperator, ":");
-            if (isIsoDate(newValue)){
-                return new Date(newValue);
-            } else if (EncodingMap.date.defaultValue){
-                return EncodingMap.date.defaultValue;
-            } else {
-                return sampleSimpleValue as Date; 
-            }
-        },
-    }
-}
-
-// Record<string, ValidRouteParamPropertyType> | Array<ValidRouteParamPropertyType> | Date;
-export type ComplexRouteParamPropertyType = ComplexEncodingKeyToTypeMapping[keyof ComplexEncodingKeyToTypeMapping];
-
-export type ValidRouteParamPropertyType = SimpleRouteParamPropertyType | ComplexRouteParamPropertyType;
-
-type FilterInvalidProperty<S> = {
-    [key in keyof S]: S[key] extends ValidRouteParamPropertyType ? key : never;
-}[keyof (S)];
-
-export type GetValueTypeOfKeyProperty<S, T extends keyof S> = { [key in FilterInvalidProperty<S[T]>]: S[T][key] };
-
-
-type SampleType<T, K extends keyof T> = Required<GetValueTypeOfKeyProperty<T, K>>;
-
-
-export type RouteParamBaseType<T> = { 
-    [key in keyof T]: {
-        sample: SampleType<T, key>;
-        programmaticNavigate?: boolean;
-    }
-};
-
-export function activator<T>(routeMapping: RouteParamBaseType<T>) {
-    return routeMapping;
-}
-
-export type EncodingMapType = typeof EncodingMap;
-
-export type RouteMappingGlobalOptions = {
-    programmaticNavigate?: boolean;
-}
-
-export type RouteMappingConfiguration = {
-    encodingMap?: Partial<EncodingMapType>;
-    encodingOptions?: Partial<ComplexEncodingOptions<ComplexEncodingKey>>;
-}
-
-export type QueryStringOptions<T, K extends keyof T, S extends keyof GetValueTypeOfKeyProperty<T, K>> = {
-    full?: boolean;
-    replaceAllParams?: boolean;
-    keyOrder?: Partial<Record<S, number>>;
-}
-
-export type ClearQueryStringOptions<T, K extends keyof T, S extends keyof GetValueTypeOfKeyProperty<T, K>> = {
-    include?: S[];
-    exclude?: S[];
-}
-
-
-
-let loadedByUser = true; 
-export default <T>(routeMapping: RouteParamBaseType<T>, initialOptions: RouteMappingGlobalOptions = {}, configurations: RouteMappingConfiguration = {}) => {
-    const NavQueryContext = createContext<Partial<RouteMappingGlobalOptions>>(initialOptions);
-
-    const encodingMap = {...EncodingMap, ...configurations.encodingMap };
-    const encodingOptions = configurations.encodingOptions;
+              }
+              return [typeKey, value];
+            })
+          ) as typeof validTypeMap)
+        : validTypeMap;
+    const possibleTypeMap = {
+      ...(customSettings?.customTypeKeyMapping ?? {}),
+      ...validTypeMapWithOverrides,
+    };
+    // const encodingOptions = configurations.encodingOptions;
 
     const initialize = () => {
-        // console.log("from: ",loadedByUser);
-        loadedByUser = false;
-        // console.log("to: ",loadedByUser);
-    }
-
-    window.history.pushState = new Proxy(window.history.pushState, {
-        apply: (target, thisArg, argArray) => {
-          // trigger here what you need
-          initialize();
-          return target.apply(thisArg, argArray);
-        },
-    });
-    window.history.replaceState = new Proxy(window.history.replaceState, {
-        apply: (target, thisArg, argArray) => {
-          // trigger here what you need
-          initialize();
-          return target.apply(thisArg, argArray);
-        },
-    });
-
-
-    const useNavQueryParams = <K extends keyof T>(key: K) => {
-        const [_, setSearchParams] = useSearchParams();
-        const { search } = useLocation();
-
-        const currentOptions = useContext(NavQueryContext);
-
-        const overridedOptions = {
-            ...initialOptions,
-            ...currentOptions
-        };
-
-        const {
-            programmaticNavigate
-        } = overridedOptions;
-
-
-        const ignoreQueryParams = useMemo(() => {
-           const allowOnlyNavigateProgrommatically = routeMapping[key].programmaticNavigate ?? programmaticNavigate ?? false;
-           return loadedByUser && allowOnlyNavigateProgrommatically;
-        }, [programmaticNavigate, routeMapping[key].programmaticNavigate, loadedByUser]);
-
-        const query = useMemo(() => new URLSearchParams(search), [search]);
-
-        const getQueryString = useCallback((newParams: Partial<GetValueTypeOfKeyProperty<T, K>>, options: QueryStringOptions<T, K, keyof GetValueTypeOfKeyProperty<T, K>> = {}) => {
-            let result = options?.full ? "?": "";
-
-            const params = new URLSearchParams(options?.replaceAllParams ? {} : query);
-
-            const keyOrders = options?.keyOrder ?? {};
-            Object.entries(newParams)
-            .sort(([keyA],[keyB]) => (keyOrders[keyA] ?? 0 - keyOrders[keyB] ?? 0))
-            .forEach(([key, value]) => {
-                const type = typeof value;
-                if (["string", "number", "bigint", "boolean"].includes(type)){
-                    params.set(key, String(value));
-                }else  if (Array.isArray(value)){
-                    // array of above types
-                    params.set(key, encodingMap["array"].encode(value as ComplexEncodingKeyToTypeMapping["array"], encodingOptions));
-                }else if (value instanceof Date){
-                    const d = new Date(value as Date);
-                    params.set(key, encodingMap["date"].encode(d as ComplexEncodingKeyToTypeMapping["date"], encodingOptions));
-                }else if (value === undefined || value === null){
-                    result = "null";
-                }else{
-                    // record with values as the above types
-                    // provide default encoding
-                    params.set(key, encodingMap["record"].encode(value as ComplexEncodingKeyToTypeMapping["record"], encodingOptions));
-                }
-                
-            });
-            result += params.toString();
-            return result;
-        }, []);
-
-        const getQueryParams = useCallback(() : Partial<GetValueTypeOfKeyProperty<T, K>> => {
-            if (ignoreQueryParams){
-                return {};
-            }
-
-            let result: Partial<GetValueTypeOfKeyProperty<T, K>> = {};
-            const params = new URLSearchParams(query);
-            Object.entries(routeMapping[key].sample).forEach(([key, value]) => {
-                const stringRouteValue = params.get(key);
-                
-                if (stringRouteValue) {
-                    // check if simple type
-                    const output = simpleTypeConvert(stringRouteValue, value);
-                    if (output !== null){
-                        result[key] = output;
-                        return;
-                    }
-                    // check if advanced type
-                    const type = typeof value;
-                    
-                    if (Array.isArray(value)){
-                        // array of above types
-                        const sampleSimpleValue = value.length > 0 ? value[0] : "sample";
-                        result[key] = encodingMap["array"].decode(stringRouteValue, sampleSimpleValue, encodingOptions);
-                        return;
-                    }else if (value instanceof Date){
-                        console.log(stringRouteValue);
-                        result[key] = encodingMap["date"].decode(stringRouteValue, value, encodingOptions);
-                        return;
-                    } else if (type === "object" && stringRouteValue !== "null" && stringRouteValue !== "undefined"){
-                        // record with values as the above types
-                        // provide default encoding
-                        const sampleSimpleValues = Object.values(value as Object);
-                        const sampleSimpleValue = sampleSimpleValues.length > 0 ? sampleSimpleValues[0] : "sample";
-                        result[key] = encodingMap["record"].decode(stringRouteValue, sampleSimpleValue, encodingOptions);
-                        return;
-                    } else {
-                        return null;
-                    }
-                }
-                return null;
-            });
-            return result;
-        }, [ignoreQueryParams]);
-
-        const clearQueryParams = useCallback((options: ClearQueryStringOptions<T, K, keyof GetValueTypeOfKeyProperty<T, K>> = {}) => {
-            const clearMap = {};
-            let shouldFilter = false;
-
-            if (options?.include || options?.exclude){
-                shouldFilter = true;
-                options?.include?.reduce((sum, k) => ({...sum, [k]: true }), clearMap);
-                options?.exclude?.reduce((sum, k) => ({...sum, [k]: false}), clearMap);
-            }
-
-            setSearchParams(oldParams => {
-                const params = new URLSearchParams(oldParams);
-                Object.keys(routeMapping[key].sample).forEach((key) => {
-                    if (!shouldFilter || (shouldFilter && clearMap[key])){
-                        params.delete(key);
-                    }
-                });
-                return params;
-            })
-        }, []);
-
-        const getRouteMapping = useCallback(() => {
-            return routeMapping[key];
-        }, [])
-
-        return {
-            getQueryString,
-            getQueryParams,
-            clearQueryParams,
-            getRouteMapping
-        };
-    }
-
-    return {
-        NavQueryContext,
-        useNavQueryParams
+      // console.log("from: ",loadedByUser);
+      loadedByUser = false;
+      // console.log("to: ",loadedByUser);
     };
 
-}
+    window.history.pushState = new Proxy(window.history.pushState, {
+      apply: (target, thisArg, argArray) => {
+        // trigger here what you need
+        initialize();
+        return target.apply(thisArg, argArray);
+      },
+    });
+    window.history.replaceState = new Proxy(window.history.replaceState, {
+      apply: (target, thisArg, argArray) => {
+        // trigger here what you need
+        initialize();
+        return target.apply(thisArg, argArray);
+      },
+    });
+    // auto-generating typekeys;
+
+    // const typeKeys =
+    // Object.fromEntries(Object.entries(routeMapping).map(([routeKey, paramMap]) => {
+    //     const rK = routeKey as keyof T ;
+    //     const map = paramMap as RouteParamBaseTypeValue<T, typeof rK>;
+    //     return [rK, Object.fromEntries(Object.entries(map.sample).map(([paramKey, sampleValue]) => {
+    //         const pK = paramKey as keyof T[typeof rK];
+    //         return [pK, findTypeKey(sampleValue)];
+    //     }))]
+    // }));
+
+    const useNavQueryParams = <K extends keyof T>(key: K) => {
+      const [_, setSearchParams] = useSearchParams();
+      const { search } = useLocation();
+
+      const currentOptions = useContext(NavQueryContext);
+
+      const overridedOptions = {
+        ...initialOptions,
+        ...currentOptions,
+      };
+
+      const { programmaticNavigate } = overridedOptions;
+
+      const ignoreQueryParams = useMemo(() => {
+        const allowOnlyNavigateProgrommatically =
+          routeMapping[key].programmaticNavigate ??
+          programmaticNavigate ??
+          false;
+        return loadedByUser && allowOnlyNavigateProgrommatically;
+      }, [
+        programmaticNavigate,
+        routeMapping[key].programmaticNavigate,
+        loadedByUser,
+      ]);
+
+      const query = useMemo(() => new URLSearchParams(search), [search]);
+
+      const getQueryString = useCallback(
+        (
+          newParams: Partial<GetValueTypeOfKeyProperty<T, K, M>>,
+          options: QueryStringOptions<
+            T,
+            K,
+            M,
+            keyof GetValueTypeOfKeyProperty<T, K, M>
+          > = {}
+        ) => {
+          let result = options?.full ? "?" : "";
+
+          const params = new URLSearchParams(
+            options?.replaceAllParams ? {} : query
+          );
+
+          const routeKey = key as K;
+          const keyOrders = options?.keyOrder ?? {};
+          const paramsToEncode = Object.entries(newParams);
+
+          paramsToEncode.sort(
+            ([keyA], [keyB]) => keyOrders[keyA] ?? 0 - keyOrders[keyB] ?? 0
+          );
+
+          paramsToEncode.forEach(([paramKey, value]) => {
+            
+                let typeKey = routeMapping[routeKey].typeKeyMapping[paramKey];
+
+                if (typeKey === "unknown") {
+                    return;
+                }
+
+                const typeKeyProps = possibleTypeMap[typeKey];
+                if (typeKeyProps !== undefined) {
+                    params.set(
+                      paramKey,
+                      typeKeyProps.encodingMap.encode(value)
+                    );
+                }
+            });
+            result += params.toString();
+          return result;
+        },
+        []
+      );
+
+      const getQueryParams = useCallback(
+        (options: GetQueryParamsOptions<T, K, M> = {}): GetQueryParamsResult<T, K, M> => {
+          if (ignoreQueryParams) {
+            return { values: {} };
+          }
+
+          let useDefualtValuesMap = {};
+          if (options?.useDefault){
+            useDefualtValuesMap = options.useDefault.reduce((sum, curr) => ({...sum, [curr]: true}), useDefualtValuesMap);
+          }
+
+          // const routeKey = key as string;
+          let result: Partial<GetValueTypeOfKeyProperty<T, K, M>> = {};
+          let errors: ParsingErrorResultType<T, K, M> = {};
+          const params = new URLSearchParams(query);
+          Object.entries(routeMapping[key].typeKeyMapping).forEach(
+            ([key, typeKeyValue]) => {
+              const stringRouteValue = params.get(key);
+
+              if (stringRouteValue) {
+                const typeKey = typeKeyValue as
+                  | ValidRouteParamPropertyTypeKeys
+                  | keyof M; //typeKeys[routeKey][key];
+
+                // if (typeKey === "unknown") {
+                //   return;
+                // }
+
+                const typeKeyProps = possibleTypeMap[typeKey];
+                if (typeKeyProps !== undefined) {
+                  try {
+                    result[key] = typeKeyProps.encodingMap.decode(
+                      stringRouteValue,
+                      null
+                    );
+                  } catch (e) {
+                    // failed to decode, probably because wrong type recieved from query string
+                    if (useDefualtValuesMap[key]){
+                      const deafultValue = options?.defaults;
+                      result[key] =
+                        deafultValue ? deafultValue[key] : typeKeyProps.deafultValue;
+                    }else{
+                      errors[key] = {
+                        actualType: findTypeKeyOfString(stringRouteValue, possibleTypeMap),
+                        expectedType: typeKey,
+                        errorStringValue: stringRouteValue,
+                      };
+                    }
+                  }
+                }
+              }
+              return;
+            }
+          );
+          return { values: result, errors };
+        },
+        [ignoreQueryParams]
+      );
+
+      const clearQueryParams = useCallback(
+        (
+          options: ClearQueryParamsOptions<
+            T,
+            K,
+            M,
+            keyof GetValueTypeOfKeyProperty<T, K, M>
+          > = {}
+        ) => {
+          const clearMap = {};
+          let shouldFilter = false;
+
+          if (options?.include || options?.exclude) {
+            shouldFilter = true;
+            if (!options.include) {
+              Object.keys(routeMapping[key].typeKeyMapping).reduce(
+                (sum, k) => ({ ...sum, [k]: true }),
+                clearMap
+              );
+            } else {
+              options.include.reduce(
+                (sum, k) => ({ ...sum, [k]: true }),
+                clearMap
+              );
+            }
+            options?.exclude?.reduce(
+              (sum, k) => ({ ...sum, [k]: false }),
+              clearMap
+            );
+          }
+
+          setSearchParams((oldParams) => {
+            const params = new URLSearchParams(oldParams);
+            Object.keys(routeMapping[key].typeKeyMapping).forEach((key) => {
+              if (!shouldFilter || (shouldFilter && clearMap[key])) {
+                params.delete(key);
+              }
+            });
+            return params;
+          });
+        },
+        []
+      );
+
+      const getRouteMapping = useCallback(() => {
+        return routeMapping[key];
+      }, []);
+
+      return {
+        getQueryString,
+        getQueryParams,
+        clearQueryParams,
+        getRouteMapping,
+      };
+    };
+
+    return {
+      NavQueryContext,
+      useNavQueryParams,
+    };
+  };
+
+  return {
+    activator,
+    creator,
+  };
+};
+  

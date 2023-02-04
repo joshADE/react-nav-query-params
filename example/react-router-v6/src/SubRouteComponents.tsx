@@ -19,8 +19,20 @@ const RootComponent = () => {
   const [newNumber, setNewNumber] = useState<string>("0");
 
   const queryString = useMemo(() => {
-    return getQueryStringRoot({ focus, display, numbers }, { replaceAllParams: true});
-  }, [focus, getQueryStringRoot, display, numbers])
+    return getQueryStringRoot(
+      {
+        focus,
+        display,
+        numbers
+      },
+      { replaceAllParams: true }
+    );
+  }, [
+    focus,
+    getQueryStringRoot,
+    display,
+    numbers
+  ]);
 
 
   return (
@@ -133,7 +145,9 @@ const HomeComponent = () => {
   const [openModal, setOpenModal] = useState<RouteMapping["home"]["openModal"]>(false);
 
   const queryString = useMemo(() => {
-    return getQueryStringHome({ defaultViewCount, openModal }, { replaceAllParams: true});
+    return getQueryStringHome({ defaultViewCount, 
+      openModal 
+    }, { replaceAllParams: true});
   }, [defaultViewCount, getQueryStringHome, openModal])
   return (
     <div className={styles2["section"]}>

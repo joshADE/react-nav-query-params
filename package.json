@@ -9,6 +9,7 @@
     "build": "tsup",
     "start": "tsup src --dts --watch",
     "predeploy": "cd example/react-router-v6 && npm install && npm run build",
+    "prepare": "run-s build",
     "deploy": "gh-pages -d example/react-router-v6/build"
   },
   "keywords": [
@@ -19,6 +20,9 @@
   ],
   "author": "joshADE",
   "license": "ISC",
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "react-router-dom": "^6.4.2"
   },
