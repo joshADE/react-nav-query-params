@@ -2,52 +2,43 @@
 
 > A react package for easily managing query parameters across various routes throughout an application with typescript support, serialization/deserialization, and error handling. 
 
+## Install
+
+(Coming soon)
+
 ## Usage
 
 ```tsx
-import React, { useState } from 'react';
+
+// import the function from the package
 import { createNavManager } from "react-nav-query-params";
-import { RouterProvider, createBrowserRouter, useNavigate } from 'react-router-dom';
 
-export const PageRoutingData = {
-  root: { key: "root", route: "/", title: "Main" },
-  home: { key: "home", route: "/home", title: "Home" },
-  people: { key: "people", route: "/people", title: "People" },
-};
+export type PagesType = "route1" | "route2" | "route3";
 
-export type PageType = keyof typeof PageRoutingData;
-
-export const linkToOtherPages: {
-  [type in PageType]: Exclude<PageType, type>[];
-} = {
-  root: ["people", "home"],
-  home: ["root"],
-  people: ["root", "home"],
-};
-
-// define the types of the query params are that passed or recieved in application
+// define the types of the query params that are passed or recieved in application
 // keys correspond to different pages or components (route key)
 // values correspond to the name and type of the query params associated with route key
 
 export interface RouteMapping  {
-    "root": {
-        display: {[type in PageType]?: boolean};
-        focus: PageType;
-        numbers: number[];
-        salutation: string;
+    "route1": {
+        param1: {[type in PagesType]?: boolean};
+        param2: PagesType;
+        param3: number[];
+        param4: string;
     },
-    "home": {
-        openModal: boolean;
-        defaultViewCount: number;
+    "route2": {
+        param5: boolean;
+        param6: number;
     },
-    "people": {
-        trigger: "first" | "second" | "third";
-        name: string;
+    "route3": {
+        param7: "first" | "second" | "third";
+        param8: string;
     }
 }
 
 
-// * there are limited types you can use with this package that are grouped into one of two categories based on how encoding/decoding is handled
+// * there are limited types you can use with this package that are grouped into one of two 
+// * categories based on how encoding/decoding is handled
 // * simple types (SimpleType) => string | number | boolean | bigint
 // * complex types => Record<string, SimpleType> | Date | Array<SimpleType>
 // * encoding/decoding is done based on type key (a key associated with a specific type)
@@ -56,28 +47,29 @@ const { creator, activator } = createNavManager({
   customTypeKeyMapping: {},
 });
 
-// creating the routeMapping with activator function helps enforce typescript's type checking / autocompletion
-// activator function helps to determine the corresponding type key given the type of the route keys and their params keys
+// use the activator function returned to help enforce typescript's type checking / autocompletion
+// activator function helps to determine the corresponding type key used for encoding/decoding given the type of each params keys
 const routeMapping = activator<RouteMapping>({
-  root: {
+  route1: {
     typeKeyMapping: {
-      numbers: "numberArray", // <-- param key : type key (mapping)
-      focus: "string",
-      salutation: "string",
-      display: "booleanRecord",
+      param1: "booleanRecord", // <-- param key : type key (mapping)
+      param2: "string",
+      param3: "numberArray",
+      param4: "string",
+      
     },
     programmaticNavigate: false, // only read the query params for this route when navigating programmatically if set to true
   },
-  home: {
+  route2: {
     typeKeyMapping: {
-      openModal: "boolean",
-      defaultViewCount: "number",
+      param5: "boolean",
+      param6: "number",
     },
   },
-  people: {
+  route3: {
     typeKeyMapping: {
-      trigger: "string",
-      name: "string",
+      param7: "string",
+      param8: "string",
     },
   },
 });
@@ -85,14 +77,15 @@ const routeMapping = activator<RouteMapping>({
 
 // call creator function with the routeMapping
 // and you will get back a context to wrap around application
-// as well as a hook to 'look up' functions that help manage groups of query params names and types based on route key provided
+// as well as a hook to 'look up' functions that help manage each grouping of query params based on the route key provided
+
 export const { NavQueryContext, useNavQueryParams } = creator(
   routeMapping,
-  {}, // object of options you can pass to createNavManager(same as the 'value' prop in NavQueryContext.Provider) so you can override the inital options when creating context provider
-  { // object of configurations passed to the creator function. Here, you can specify to use a custom encoding/decoding function for a specific type key or change the default value
+  {}, // object of options you can pass to createNavManager(same as the 'value' prop in NavQueryContext.Provider)
+  { // object of configurations passed to the creator function. Here, you can specify to use a custom encoding/decoding function for a specific type key
     validTypeEncodingMapOverride: {
       stringRecord: {
-        defaultValue: {}, // set the default value for the stringRecord type key (can also specify default for each param key when using hook, but this value will be a fallback)
+        defaultValue: {}, // set the default value for the stringRecord type key 
       },
     },
   }
@@ -117,17 +110,17 @@ const App = () => {
 }
 
 const RouterPage = () => {
-    const { getQueryParams: getQueryParamsRoot, clearQueryParams: clearQueryParamsRoot  } = useNavQueryParams("root");
-    const { getQueryParams: getQueryParamsHome, clearQueryParams: clearQueryParamsHome  } = useNavQueryParams("home");
-    const { getQueryParams: getQueryParamsPeople, clearQueryParams: clearQueryParamsPeople  } = useNavQueryParams("people");
+    const { getQueryParams: getQueryParamsRoute1, clearQueryParams: clearQueryParamsRoute1 } = useNavQueryParams("route1");
+    const { getQueryParams: getQueryParamsRoute2, clearQueryParams: clearQueryParamsRoute2 } = useNavQueryParams("route2");
+    const { getQueryParams: getQueryParamsRoute3, clearQueryParams: clearQueryParamsRoute3 } = useNavQueryParams("route3");
 
     useEffect(() => {
-        console.log("root:", getQueryParamsRoot());
-        clearQueryParamsRoot();
-        console.log("home:", getQueryParamsHome());
-        clearQueryParamsHome();
-        console.log("people:", getQueryParamsPeople());
-        clearQueryParamsPeople();
+        console.log("route1:", getQueryParamsRoute1());
+        clearQueryParamsRoute1();
+        console.log("route2:", getQueryParamsRoute2());
+        clearQueryParamsRoute2();
+        console.log("route3:", getQueryParamsRoute3());
+        clearQueryParamsRoute3();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
@@ -139,9 +132,9 @@ const RouterPage = () => {
 }
 
 // In some other component...
-const { getQueryString  } = useNavQueryParams("root");
+const { getQueryString  } = useNavQueryParams("route1");
 
-const queryString = getQueryString({ focus: "people", display: { "home": true }, numbers: [10, 30] }, 
+const queryString = getQueryString({ param2: "param1", param1: { "param3": true }, param3: [10, 30] }, 
 { 
   replaceAllParams: true, // replace the current query params, when getting query string
   full: true, // include the '?' in query string
@@ -150,10 +143,11 @@ const queryString = getQueryString({ focus: "people", display: { "home": true },
 
 const navigate = useNavigate(); // from react router v6
 
-navigate("testpath" + queryString);
-// "/testpath?focus=people&number=10%2C30&..."
-
-
+navigate("route3" + queryString);
+// "/route3?param2=param1&param3=10%2C30&..."
 
 // see example/react-router-v6 folder for a more detailed and complete example
 ```
+
+
+
