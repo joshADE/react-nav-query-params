@@ -134,7 +134,7 @@ const RouterPage = () => {
 // In some other component...
 const { getQueryString  } = useNavQueryParams("route1");
 
-const queryString = getQueryString({ param2: "param1", param1: { "param3": true }, param3: [10, 30] }, 
+const queryString = getQueryString({ param2: "route3", param1: { "route3": true }, param3: [10, 30] }, 
 { 
   replaceAllParams: true, // replace the current query params, when getting query string
   full: true, // include the '?' in query string
@@ -144,7 +144,7 @@ const queryString = getQueryString({ param2: "param1", param1: { "param3": true 
 const navigate = useNavigate(); // from react router v6
 
 navigate("route3" + queryString);
-// "/route3?param2=param1&param3=10%2C30&..."
+// "/route3?param2=route3&param3=10%2C30&..."
 
 // see example/react-router-v6 folder for a more detailed and complete example
 ```
