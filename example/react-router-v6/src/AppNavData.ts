@@ -85,7 +85,7 @@ const { creator, activator } = createNavManager({
 });
 
 // activator function helps to determine the corresponding type key given the type of the route keys and their params keys
-const routeMapping = activator<RouteMapping>({
+const routeMapping = activator<any>({
   root: {
     typeKeyMapping: {
       numbers: "numberArray", // <-- param key : type key (mapping)
