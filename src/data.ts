@@ -11,6 +11,7 @@ import {
 import {
   isIsoDate,
   matchArrayType,
+  matchArrayTypeWithArrayCheck,
   matchRecordType,
   simpleTypeConvert,
   simpleTypeConvertWithError,
@@ -105,7 +106,7 @@ export const validTypeMap: {
     category: "complex",
     sample: ["sample"],
     match: (value) => {
-      return matchArrayType(value, "string");
+      return matchArrayTypeWithArrayCheck(value, "string");
     },
   },
   numberArray: {
@@ -125,7 +126,7 @@ export const validTypeMap: {
     category: "complex",
     sample: [-1],
     match: (value) => {
-      return matchArrayType(value, "number");
+      return matchArrayTypeWithArrayCheck(value, "number");
     },
   },
   bigintArray: {
@@ -148,7 +149,7 @@ export const validTypeMap: {
     category: "complex",
     sample: [BigInt(9007199254740991)],
     match: (value) => {
-      return matchArrayType(value, "bigint");
+      return matchArrayTypeWithArrayCheck(value, "bigint");
     },
   },
   booleanArray: {
@@ -168,7 +169,7 @@ export const validTypeMap: {
     category: "complex",
     sample: [false],
     match: (value) => {
-      return matchArrayType(value, "boolean");
+      return matchArrayTypeWithArrayCheck(value, "boolean");
     },
   },
   stringRecord: {

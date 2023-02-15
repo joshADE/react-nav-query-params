@@ -91,6 +91,17 @@ export function matchArrayType(
 ) {
   return (
     typeof value !== "string" && Array.isArray(value) &&
+    value.every((e) => typeof e === simpleType)
+  );
+}
+
+export function matchArrayTypeWithArrayCheck(
+  value: unknown,
+  simpleType: "string" | "number" | "boolean" | "bigint"
+) {
+  return (
+    typeof value !== "string" &&
+    Array.isArray(value) &&
     value.length > 1 &&
     value.every((e) => typeof e === simpleType)
   );

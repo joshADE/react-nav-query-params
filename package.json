@@ -4,13 +4,14 @@
   "description": "A react library for easily managing typed url query parameters.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
+  "repository": "joshADE/react-nav-query-params",
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "start": "tsup src/index.ts --dts --watch",
     "predeploy": "cd example/react-router-v6 && npm install && npm run build",
-    "prepare": "run-s build",
+    "prepare": "npm run build",
     "deploy": "gh-pages -d example/react-router-v6/build",
     "lint": "tsc"
   },
