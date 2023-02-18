@@ -1,10 +1,14 @@
 # react-nav-query-params
 
-> A react package for easily managing query parameters across various routes throughout an application with typescript support, serialization/deserialization, and error handling. 
+> A react package for easily managing query parameters across various routes throughout an application with typescript support, serialization/deserialization, and error handling. Note: This package is still in development, so there may be some bugs, major changes over time.
+
+[![NPM](https://img.shields.io/npm/v/react-nav-query-params.svg)](https://www.npmjs.com/package/react-nav-query-params) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
 ## Install
 
-(Coming soon)
+```bash
+npm install --save react-nav-query-params
+```
 
 ## Usage
 
@@ -109,7 +113,7 @@ const routeMapping = activator<QueryParamTypeMapping>({
 
 export const { NavQueryContext, useNavQueryParams } = creator(
   routeMapping,
-  {}, // object of options you can pass to createNavManager(same as the 'value' prop in NavQueryContext.Provider) (this is an optional argument)
+  {}, // object of options you can pass to creator function (same as the 'value' prop in NavQueryContext.Provider) (this is an optional argument)
   { // object of configurations passed to the creator function. Here, you can specify to use a custom encoding/decoding function for a specific type key (this is an optional argument)
     validTypeEncodingMapOverride: {
       stringRecord: {
