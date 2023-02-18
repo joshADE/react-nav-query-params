@@ -25,6 +25,7 @@ export interface RouteMapping  {
         param2: PagesType;
         param3: number[];
         param4: string;
+        param9: {[type in PagesType]?: boolean};
     },
     "route2": {
         param5: boolean;
@@ -43,8 +44,28 @@ export interface RouteMapping  {
 // * complex types => Record<string, SimpleType> | Date | Array<SimpleType>
 // * encoding/decoding is done based on type key (a key associated with a specific type)
 
-const { creator, activator } = createNavManager({
-  customTypeKeyMapping: {},
+const { creator, activator } = createNavManager<{
+  myCustomObject: { 
+    [key: string]: number | string | boolean 
+  }
+}>({
+  customTypeKeyMapping: { // <- define custom type keys to encode and decode
+    myCustomObject: {
+      category: "custom", // <- always use "custom"
+      match: (v) => {     // <- specify a way to match for the type key given an unkown value (error handling)
+        return typeof v === "object";
+      },
+      encodingMap: {      // <- specify a way to encode/decode type associated with key
+        encode: (v) => {
+          return JSON.stringify(v);
+        },
+        decode: (v) => {    // <- can throw an Error inside the decode function saying the string value cannot be decoded
+          return JSON.parse(v);
+        },
+      },
+      sample: {}        // <- sample value of the type
+    },
+  }
 });
 
 // use the activator function returned to help enforce typescript's type checking / autocompletion
@@ -56,7 +77,7 @@ const routeMapping = activator<RouteMapping>({
       param2: "string",
       param3: "numberArray",
       param4: "string",
-      
+      param9: "myCustomObject", // could also be booleanRecord type key
     },
     programmaticNavigate: false, // only read the query params for this route when navigating programmatically if set to true
   },

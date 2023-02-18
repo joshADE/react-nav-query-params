@@ -36,7 +36,11 @@ export interface RouteMapping {
   };
 }
 
-const { creator, activator } = createNavManager({
+const { creator, activator } = createNavManager<{
+  myCustomObject: {
+    [key: string]: number | string | boolean;
+  };
+}>({
   customTypeKeyMapping: {
     // homes: {
     //   category: "custom",
@@ -66,20 +70,24 @@ const { creator, activator } = createNavManager({
     //     }
     //   },
     // },
+    // <- define custom type keys to encode and decode
     myCustomObject: {
-      category: "custom",
+      category: "custom", // <- always use "custom"
       match: (v) => {
+        // <- specify a way to match for the type key given an unkown value (error handling)
         return typeof v === "object";
       },
       encodingMap: {
+        // <- specify a way to encode/decode type associated with key
         encode: (v) => {
           return JSON.stringify(v);
         },
         decode: (v) => {
+          // <- can throw an Error inside the decode function saying the string value cannot be decoded
           return JSON.parse(v);
         },
       },
-      sample: {} as { [key: string]: number | string | boolean },
+      sample: {}, // <- sample value of the type
     },
   },
 });
