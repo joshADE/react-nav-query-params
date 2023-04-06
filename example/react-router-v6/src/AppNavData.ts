@@ -18,7 +18,7 @@ export type PageType = keyof typeof PageRoutingData;
 
 // do not include optional types in the route mapping object type
 
-export interface RouteMapping {
+export type RouteMapping = {
   root: {
     // <-- route key
     display: { [type in PageType]?: boolean }; // <-- param key
@@ -34,7 +34,7 @@ export interface RouteMapping {
     trigger: "first" | "second" | "third";
     name: string;
   };
-}
+};
 
 const { creator, activator } = createNavManager<{
   myCustomObject: {
@@ -112,7 +112,7 @@ const routeMapping = activator<RouteMapping>({
   people: {
     typeKeyMapping: {
       trigger: "string",
-      name: "string"
+      name: "string",
     },
   },
 });

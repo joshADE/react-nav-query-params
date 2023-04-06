@@ -7,6 +7,6 @@ export {
   GetValueTypeOfKeyProperty,
   QueryStringOptions,
   RouteParamBaseType,
-  ValidRouteParamPropertyType,
+  ValidQueryParamPropertyTypeKeys,
 } from "./types";
 

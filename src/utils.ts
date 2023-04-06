@@ -1,5 +1,5 @@
 import { validTypeMap } from "./data";
-import { ValidRouteParamPropertyTypeKeys } from "./types";
+import { ValidQueryParamPropertyTypeKeys } from "./types";
 
 export function isIsoDate(str: string) {
   if (!/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/.test(str)) return false;
@@ -117,13 +117,13 @@ export function matchRecordType(
 
   const keys = Object.keys(value);
 
-  return keys.length > 0 && keys.every((e) => typeof value[e] === simpleType);
+  return keys.length > 0 && keys.every((e) => typeof value[e as keyof typeof value] === simpleType);
 }
 
 export function findTypeKey(
   input: unknown,
   possibleTypeMap: typeof validTypeMap,
-): ValidRouteParamPropertyTypeKeys | "unknown" {
+): ValidQueryParamPropertyTypeKeys | "unknown" {
   const entries = Object.entries(possibleTypeMap);
 
   const simpleEntries = entries.filter(([, value]) => {
@@ -140,7 +140,7 @@ export function findTypeKey(
     });
 
   if (foundSimpleMatch) {
-    return foundSimpleMatch[0] as ValidRouteParamPropertyTypeKeys;
+    return foundSimpleMatch[0] as ValidQueryParamPropertyTypeKeys;
   }
 
   const complexEntries = entries.filter(([, value]) => {
@@ -157,7 +157,7 @@ export function findTypeKey(
     });
 
   if (foundComplexMatch) {
-    return foundComplexMatch[0] as ValidRouteParamPropertyTypeKeys;
+    return foundComplexMatch[0] as ValidQueryParamPropertyTypeKeys;
   }
 
   const customEntries = entries.filter(([, value]) => {
@@ -174,7 +174,7 @@ export function findTypeKey(
     });
 
   if (foundCustomMatch) {
-    return foundCustomMatch[0] as ValidRouteParamPropertyTypeKeys;
+    return foundCustomMatch[0] as ValidQueryParamPropertyTypeKeys;
   }
 
   return "unknown";
@@ -199,7 +199,7 @@ function decodeAndMatch(
 export function findTypeKeyOfString(
   input: string,
   possibleTypeMap: typeof validTypeMap
-): ValidRouteParamPropertyTypeKeys {
+): ValidQueryParamPropertyTypeKeys {
   const entries = Object.entries(possibleTypeMap);
 
   const simpleEntries = entries.filter(([, value]) => {
@@ -217,7 +217,7 @@ export function findTypeKeyOfString(
     });
 
   if (foundSimpleMatch) {
-    return foundSimpleMatch[0] as ValidRouteParamPropertyTypeKeys;
+    return foundSimpleMatch[0] as ValidQueryParamPropertyTypeKeys;
   }
 
   const complexEntries = entries.filter(([, value]) => {
@@ -234,7 +234,7 @@ export function findTypeKeyOfString(
     });
 
   if (foundComplexMatch) {
-    return foundComplexMatch[0] as ValidRouteParamPropertyTypeKeys;
+    return foundComplexMatch[0] as ValidQueryParamPropertyTypeKeys;
   }
 
   const customEntries = entries.filter(([, value]) => {
@@ -251,7 +251,7 @@ export function findTypeKeyOfString(
     });
 
   if (foundCustomMatch) {
-    return foundCustomMatch[0] as ValidRouteParamPropertyTypeKeys;
+    return foundCustomMatch[0] as ValidQueryParamPropertyTypeKeys;
   }
 
   return "string";

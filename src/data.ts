@@ -1,11 +1,10 @@
 import {
   ComplexEncodingKey,
   ComplexEncodingKeyToTypeMapping,
-  // ComplexEncodingOptions,
   EncodingMapValue,
   TypeKeyToTypeMapping,
   TypeMapValue,
-  ValidRouteParamPropertyTypeKeys,
+  ValidQueryParamPropertyTypeKeys,
 } from "./types";
 
 import {
@@ -18,7 +17,7 @@ import {
 } from "./utils";
 
 export const validTypeMap: {
-  [typeKey in ValidRouteParamPropertyTypeKeys]?: TypeMapValue<
+  [typeKey in ValidQueryParamPropertyTypeKeys]?: TypeMapValue<
     TypeKeyToTypeMapping[typeKey]
   >;
 } = {

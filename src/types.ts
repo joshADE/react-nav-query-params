@@ -1,3 +1,4 @@
+// not used
 export type SimpleRouteParamPropertyType =
   | string
   | number
@@ -5,11 +6,7 @@ export type SimpleRouteParamPropertyType =
   | boolean
   | null;
 
-export type EncodingMapValue<T> = {
-  encode: (value: T) => string;
-  decode: (value: string, sampleSimpleValue: unknown) => T;
-  defaultValue?: T;
-};
+// not used
 export type ComplexEncodingKeyToTypeMapping = {
   array: Array<SimpleRouteParamPropertyType>;
   record: Record<string, SimpleRouteParamPropertyType>;
@@ -18,6 +15,7 @@ export type ComplexEncodingKeyToTypeMapping = {
 
 export type ComplexEncodingKey = keyof ComplexEncodingKeyToTypeMapping;
 
+// not used
 // export type ComplexEncodingOptions<T extends ComplexEncodingKey> = Partial<{
 //   [key in T]: unknown;
 // }> & {
@@ -31,11 +29,21 @@ export type ComplexEncodingKey = keyof ComplexEncodingKeyToTypeMapping;
 //   date: { hyphenSeperator: string; colonSeperator: string };
 // };
 
-export type TypeMapValue<T> = {
-  deafultValue?: T;
-  encodingMap: EncodingMapValue<T>;
+// Guide: { [routeKey]: { [paramKey]: [typeKey] } } <- input of package used for determine type conversion
+// ValidTypeKeys = keyof TypeKeyToTypeMapping(defined below)
+// PossibleTypeKeys = ValidTypeKeys + CustomTypeKeys(defined by user of package)
+
+export type EncodingMapValue<ParamType> = {
+  encode: (value: ParamType) => string;
+  decode: (value: string, sampleSimpleValue: unknown) => ParamType;
+  defaultValue?: ParamType;
+};
+
+export type TypeMapValue<ParamType> = {
+  deafultValue?: ParamType;
+  encodingMap: EncodingMapValue<ParamType>;
   category: "simple" | "complex" | "custom";
-  sample: T;
+  sample: ParamType;
   match: (value: unknown) => boolean;
   matchPriority?: number;
 };
@@ -46,7 +54,6 @@ export type TypeKeyToTypeMapping = {
   number: number;
   bigint: bigint;
   boolean: boolean;
-  // null: null;
 
   // complex types
   // array types
@@ -54,75 +61,139 @@ export type TypeKeyToTypeMapping = {
   numberArray: number[];
   bigintArray: bigint[];
   booleanArray: boolean[];
-  // nullArray: null[];
   // record types
   stringRecord: Record<string, string>;
   numberRecord: Record<string, number>;
   bigintRecord: Record<string, bigint>;
   booleanRecord: Record<string, boolean>;
-  // nullRecord: Record<string, null>;
   // date
   date: Date;
 };
 
-export type ValidRouteParamPropertyTypeKeys = keyof TypeKeyToTypeMapping;
+export type ValidQueryParamPropertyTypeKeys = keyof TypeKeyToTypeMapping;
 
 
-// Record<string, ValidRouteParamPropertyType> | Array<ValidRouteParamPropertyType> | Date;
-export type ComplexRouteParamPropertyType = ComplexEncodingKeyToTypeMapping[keyof ComplexEncodingKeyToTypeMapping];
-
-export type ValidRouteParamPropertyType = SimpleRouteParamPropertyType | ComplexRouteParamPropertyType;
-
-type FilterInvalidProperty<S, C extends {} = {}> = {
-  [key in keyof S]: S[key] extends (TypeKeyToTypeMapping[ValidRouteParamPropertyTypeKeys] | C[keyof C])
-    ? key
+export type FilterInvalidParamKeys<
+  TInputQueryParamToTypeMapping,
+  TCustomTypeKeysDefinition extends {} = {}
+> = {
+  [paramKey in keyof TInputQueryParamToTypeMapping]: TInputQueryParamToTypeMapping[paramKey] extends
+    | TypeKeyToTypeMapping[ValidQueryParamPropertyTypeKeys]
+    | TCustomTypeKeysDefinition[keyof TCustomTypeKeysDefinition]
+    ? paramKey
     : never;
-}[keyof S];
+}[keyof TInputQueryParamToTypeMapping];
 
-export type GetValueTypeOfKeyProperty<S, T extends keyof S, C extends {} = {}> = { [key in FilterInvalidProperty<S[T], C>]: S[T][key] };
-
-// export type MapKeyPropertyToTypeKey<S, T extends keyof S> = {
-//   [key in FilterInvalidProperty<S[T]>]: ValidRouteParamPropertyTypeKeys;
-// };
+export type GetValueTypeOfKeyProperty<
+  TInputQueryParamMap,
+  TInputRouteKey extends keyof TInputQueryParamMap,
+  TCustomTypeKeysDefinition extends {} = {}
+> = {
+  [key in FilterInvalidParamKeys<
+    TInputQueryParamMap[TInputRouteKey],
+    TCustomTypeKeysDefinition
+  >]: TInputQueryParamMap[TInputRouteKey][key];
+};
 
 
 export type GetTypeKeyOfValueType<
-  S,
-  T extends keyof S,
-  K extends keyof S[T]
+  TInputQueryParamMap,
+  TInputRouteKey extends keyof TInputQueryParamMap,
+  TInputParamKey extends keyof TInputQueryParamMap[TInputRouteKey]
 > = {
-  [key in ValidRouteParamPropertyTypeKeys]: S[T][K] extends TypeKeyToTypeMapping[key]
-    ? key
+  [typeKey in ValidQueryParamPropertyTypeKeys]: TInputQueryParamMap[TInputRouteKey][TInputParamKey] extends TypeKeyToTypeMapping[typeKey]
+    ? typeKey
     : never;
-}[keyof TypeKeyToTypeMapping];
+}[ValidQueryParamPropertyTypeKeys];
 
 export type GetTypeKeyOfCustomValueType<
-  S,
-  T extends keyof S,
-  K extends keyof S[T],
-  C extends {} = {}
+  TInputQueryParamMap,
+  TInputRouteKey extends keyof TInputQueryParamMap,
+  TInputParamKey extends keyof TInputQueryParamMap[TInputRouteKey],
+  TCustomTypeKeysDefinition extends {} = {}
 > = {
-  [key in keyof C]: S[T][K] extends C[key]
-    ? key
+  [typeKey in keyof TCustomTypeKeysDefinition]: TInputQueryParamMap[TInputRouteKey][TInputParamKey] extends TCustomTypeKeysDefinition[typeKey]
+    ? typeKey
     : never;
-}[keyof C];
+}[keyof TCustomTypeKeysDefinition];
 
-type TypeKeyMapping<T, K extends keyof T, C extends {} = {}> = {
-  [key in keyof T[K]]:
-    | GetTypeKeyOfValueType<T, K, key>
-    | GetTypeKeyOfCustomValueType<T, K, key, C>;
+
+export type CleanQueryParamMapKeys<
+  TInputQueryParamMap extends {
+    [routeKey: string]: { [paramKey: string]: any };
+  },
+  TCustomTypeKeysDefinition extends {} = {}
+> = {
+  [routeKey in keyof TInputQueryParamMap]: {
+    [paramKey in keyof TInputQueryParamMap[routeKey]]: GetTypeKeyOfValueType<
+      TInputQueryParamMap,
+      routeKey,
+      paramKey
+    > extends never
+      ? GetTypeKeyOfCustomValueType<
+          TInputQueryParamMap,
+          routeKey,
+          paramKey,
+          TCustomTypeKeysDefinition
+        > extends never
+        ? never
+        : TCustomTypeKeysDefinition[GetTypeKeyOfCustomValueType<
+            TInputQueryParamMap,
+            routeKey,
+            paramKey,
+            TCustomTypeKeysDefinition
+          >]
+      : TypeKeyToTypeMapping[GetTypeKeyOfValueType<
+          TInputQueryParamMap,
+          routeKey,
+          paramKey
+        >];
+  };
 };
 
-export type RouteParamBaseTypeValue<T, K extends keyof T, C extends {} = {}> = {
-  typeKeyMapping: TypeKeyMapping<T, K, C>;
+type TypeKeyMapping<
+  TInputQueryParamMap,
+  TInputRouteKey extends keyof TInputQueryParamMap,
+  TCustomTypeKeysDefinition extends {} = {}
+> = {
+  [paramKey in keyof TInputQueryParamMap[TInputRouteKey]]:
+    | GetTypeKeyOfValueType<TInputQueryParamMap, TInputRouteKey, paramKey>
+    | GetTypeKeyOfCustomValueType<
+        TInputQueryParamMap,
+        TInputRouteKey,
+        paramKey,
+        TCustomTypeKeysDefinition
+      >;
+};
+
+export type RouteParamBaseTypeValue<
+  TInputMapping,
+  TInputRouteKey extends keyof TInputMapping,
+  TCustomKeysDefinition extends {} = {}
+> = {
+  typeKeyMapping: TypeKeyMapping<
+    TInputMapping,
+    TInputRouteKey,
+    TCustomKeysDefinition
+  >;
   programmaticNavigate?: boolean;
 };
 
-export type RouteParamBaseType<T, C extends {} = {}> = { 
-    [key in keyof T]: RouteParamBaseTypeValue<T, key, C>;
+export type RouteParamBaseType<
+  TInputMapping extends {},
+  TCustomKeysDefinition extends {} = {}
+> = {
+  [routeKey in keyof TInputMapping]: RouteParamBaseTypeValue<
+    TInputMapping,
+    routeKey,
+    TCustomKeysDefinition
+  >;
 };
 
-export function activator<T extends {}, C extends {} = {}>(routeMapping: RouteParamBaseType<T, C>) {
+export function activator<
+  TInputMapping extends {},
+  TCustomKeysDefinition extends {} = {}
+>(routeMapping: RouteParamBaseType<TInputMapping, TCustomKeysDefinition>) {
   return routeMapping;
 }
 
@@ -130,58 +201,106 @@ export type RouteMappingGlobalOptions = {
   programmaticNavigate?: boolean;
 };
 
-export type RouteMappingCustomSetting<M extends {} = {}> = {
-  customTypeKeyMapping: { [key in keyof M]: TypeMapValue<M[key]> };
+export type RouteMappingCustomSetting<TCustomKeysDefinition extends {} = {}> = {
+  customTypeKeyMapping: {
+    [key in keyof TCustomKeysDefinition]: TypeMapValue<
+      TCustomKeysDefinition[key]
+    >;
+  };
 };
 
 
-export type ValidTypeMappingOverride = {
-  [key in ValidRouteParamPropertyTypeKeys]?: Partial<EncodingMapValue<
-    TypeKeyToTypeMapping[key]
-  >>;
+export type ValidTypeEncodingMapOverride = {
+  [typeKey in ValidQueryParamPropertyTypeKeys]?: Partial<
+    EncodingMapValue<TypeKeyToTypeMapping[typeKey]>
+  >;
 };
 
 export type RouteMappingConfiguration = {
-  validTypeEncodingMapOverride?: ValidTypeMappingOverride;
+  validTypeEncodingMapOverride?: ValidTypeEncodingMapOverride;
 };
 
+// options used when retrieving the query string 
 export type QueryStringOptions<
-  T,
-  K extends keyof T,
-  C extends {},
-  S extends keyof GetValueTypeOfKeyProperty<T, K, C>
+  TInputMapping,
+  TInputRouteKey extends keyof TInputMapping,
+  TCustomKeysDefinition extends {},
+  TInputParamKey extends FilterInvalidParamKeys<
+    TInputMapping[TInputRouteKey],
+    TCustomKeysDefinition
+  >
 > = {
   full?: boolean;
   replaceAllParams?: boolean;
-  keyOrder?: Partial<Record<S, number>>;
+  keyOrder?: Partial<Record<TInputParamKey, number>>;
 };
 
+// options used when clearing the query params 
 export type ClearQueryParamsOptions<
-  T,
-  K extends keyof T,
-  C extends {},
-  S extends keyof GetValueTypeOfKeyProperty<T, K, C>,
+  TInputMapping,
+  TInputRouteKey extends keyof TInputMapping,
+  TCustomKeysDefinition extends {},
+  TInputParamKey extends FilterInvalidParamKeys<
+    TInputMapping[TInputRouteKey],
+    TCustomKeysDefinition
+  >
 > = {
-  include?: S[];
-  exclude?: S[];
+  include?: TInputParamKey[];
+  exclude?: TInputParamKey[];
 };
 
-export type ParsingErrorResultType<T, K extends keyof T, C extends {} = {}> = {
-  [key in FilterInvalidProperty<T[K], C>]?: {
-    expectedType: ValidRouteParamPropertyTypeKeys | keyof C;
-    actualType: ValidRouteParamPropertyTypeKeys | keyof C;
+// result when there is an error decoding/parsing
+export type ParsingErrorResultType<
+  TInputMapping,
+  TInputRouteKey extends keyof TInputMapping,
+  TCustomKeysDefinition extends {} = {}
+> = {
+  [key in FilterInvalidParamKeys<
+    TInputMapping[TInputRouteKey],
+    TCustomKeysDefinition
+  >]?: {
+    expectedType: ValidQueryParamPropertyTypeKeys | keyof TCustomKeysDefinition;
+    actualType: ValidQueryParamPropertyTypeKeys | keyof TCustomKeysDefinition;
     errorStringValue: string;
   };
 };
 
-export type GetQueryParamsOptions<T, K extends keyof T, C extends {} = {}> = {
-  defaults?: { [key in FilterInvalidProperty<T[K], C>]?: T[K][key] };
-  useDefault?: (FilterInvalidProperty<T[K], C>)[];
+// options used when retrieving the query params 
+export type GetQueryParamsOptions<
+  TInputMapping,
+  TInputRouteKey extends keyof TInputMapping,
+  TCustomKeysDefinition extends {} = {}
+> = {
+  defaults?: {
+    [key in FilterInvalidParamKeys<
+      TInputMapping[TInputRouteKey],
+      TCustomKeysDefinition
+    >]?: TInputMapping[TInputRouteKey][key];
+  };
+  useDefault?: FilterInvalidParamKeys<
+    TInputMapping[TInputRouteKey],
+    TCustomKeysDefinition
+  >[];
 };
 
-export type GetQueryParamsResult<T, K extends keyof T, C extends {} = {}> = {
-  values: Partial<GetValueTypeOfKeyProperty<T, K, C>>;
-  errors?: ParsingErrorResultType<T, K, C>;
+// result of retrieving the query params 
+export type GetQueryParamsResult<
+  TInputMapping,
+  TInputRouteKey extends keyof TInputMapping,
+  TCustomKeysDefinition extends {} = {}
+> = {
+  values: Partial<
+    GetValueTypeOfKeyProperty<
+      TInputMapping,
+      TInputRouteKey,
+      TCustomKeysDefinition
+    >
+  >;
+  errors?: ParsingErrorResultType<
+    TInputMapping,
+    TInputRouteKey,
+    TCustomKeysDefinition
+  >;
 };
 
 

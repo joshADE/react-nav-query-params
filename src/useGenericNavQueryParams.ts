@@ -9,23 +9,42 @@ import {
   QueryStringOptions,
   RouteMappingGlobalOptions,
   RouteParamBaseType,
-  ValidRouteParamPropertyTypeKeys,
+  ValidQueryParamPropertyTypeKeys,
   RouteMappingCustomSetting,
   RouteMappingConfiguration,
   activator as untypedActivator,
   GetQueryParamsOptions,
+  FilterInvalidParamKeys,
+  TypeMapValue,
+  // CleanQueryParamMapKeys,
+  TypeKeyToTypeMapping,
 } from "./types";
 import { findTypeKeyOfString } from "./utils";
 
 let loadedByUser = true;
 
-export default <M extends {} = {}>(
-  customSettings: RouteMappingCustomSetting<M>
+
+
+
+export default <TCustomKeysDefinition extends { [customTypeKey: string]: any } = {}>(
+  customSettings: RouteMappingCustomSetting<TCustomKeysDefinition>
 ) => {
-  const activator = <T extends {}>(v: RouteParamBaseType<T, M>) => untypedActivator<T, M>(v);
+
+  type KeyType = string;
+  type ValueType = TCustomKeysDefinition[keyof TCustomKeysDefinition] | TypeKeyToTypeMapping[keyof TypeKeyToTypeMapping];
+  type TType = { [routeKey in KeyType]?: { [paramKey in KeyType]?: ValueType } };
+  // type TDefault = { [routeKey in KeyType]?: { [paramKey in KeyType]?: any } };
+
+  const activator =<T extends TType>(
+    v: RouteParamBaseType<T, TCustomKeysDefinition>
+  ) => {
+    return untypedActivator<T, TCustomKeysDefinition>(
+      v
+    );
+  }
 
   const creator = <T extends {}>(
-    routeMapping: RouteParamBaseType<T, M>,
+    routeMapping: RouteParamBaseType<T, TCustomKeysDefinition>,
     initialOptions: RouteMappingGlobalOptions = {},
     configurations: RouteMappingConfiguration = {}
   ) => {
@@ -36,7 +55,7 @@ export default <M extends {} = {}>(
       configurations?.validTypeEncodingMapOverride
         ? (Object.fromEntries(
             Object.entries(validTypeMap).map(([key, value]) => {
-              const typeKey = key as ValidRouteParamPropertyTypeKeys;
+              const typeKey = key as ValidQueryParamPropertyTypeKeys;
               const typeMapOverride =
                 configurations.validTypeEncodingMapOverride!;
               if (typeMapOverride[typeKey] !== undefined) {
@@ -97,9 +116,16 @@ export default <M extends {} = {}>(
     //     }))]
     // }));
 
-    const useNavQueryParams = <K extends keyof T>(key: K) => {
+    const useNavQueryParams = <TInputRouteKey extends keyof T>(
+      key: TInputRouteKey
+    ) => {
       const [_, setSearchParams] = useSearchParams();
       const { search } = useLocation();
+      type InputParamKey = keyof GetValueTypeOfKeyProperty<
+        T,
+        TInputRouteKey,
+        TCustomKeysDefinition
+      >;
 
       const currentOptions = useContext(NavQueryContext);
 
@@ -126,12 +152,18 @@ export default <M extends {} = {}>(
 
       const getQueryString = useCallback(
         (
-          newParams: Partial<GetValueTypeOfKeyProperty<T, K, M>>,
+          newParams: Partial<
+            GetValueTypeOfKeyProperty<T, TInputRouteKey, TCustomKeysDefinition>
+          >,
           options: QueryStringOptions<
             T,
-            K,
-            M,
-            keyof GetValueTypeOfKeyProperty<T, K, M>
+            TInputRouteKey,
+            TCustomKeysDefinition,
+            keyof GetValueTypeOfKeyProperty<
+              T,
+              TInputRouteKey,
+              TCustomKeysDefinition
+            >
           > = {}
         ) => {
           let result = options?.full ? "?" : "";
@@ -140,80 +172,109 @@ export default <M extends {} = {}>(
             options?.replaceAllParams ? {} : query
           );
 
-          const routeKey = key as K;
-          const keyOrders = options?.keyOrder ?? {};
-          const paramsToEncode = Object.entries(newParams);
+          const routeKey = key as TInputRouteKey;
+          
+          const keyOrders =
+            options?.keyOrder ?? ({} as Record<InputParamKey, number>);
+          const paramsToEncode = Object.entries(newParams) as [InputParamKey, unknown][];
 
-          paramsToEncode.sort(
-            ([keyA], [keyB]) => keyOrders[keyA] ?? 0 - keyOrders[keyB] ?? 0
+          (paramsToEncode).sort(
+            ([keyA], [keyB]) => {
+              const orderA = keyOrders[keyA] ?? 0;
+              const orderB = keyOrders[keyB] ?? 0;
+              return orderA - orderB;
+            }
           );
 
           paramsToEncode.forEach(([paramKey, value]) => {
+            let typeKey = routeMapping[routeKey].typeKeyMapping[paramKey];
+
+            if (typeKey === "unknown" || typeKey === undefined) {
+              return;
+            }
             
-                let typeKey = routeMapping[routeKey].typeKeyMapping[paramKey];
-
-                if (typeKey === "unknown") {
-                    return;
-                }
-
-                const typeKeyProps = possibleTypeMap[typeKey];
-                if (typeKeyProps !== undefined) {
-                    params.set(
-                      paramKey,
-                      typeKeyProps.encodingMap.encode(value)
-                    );
-                }
-            });
-            result += params.toString();
+            const typeKeyProps = possibleTypeMap[typeKey] as TypeMapValue<any>;
+            if (typeKeyProps !== undefined) {
+              const typedValue = value as any;
+              params.set(
+                paramKey.toString(),
+                typeKeyProps.encodingMap.encode(typedValue)
+              );
+            }
+          });
+          result += params.toString();
           return result;
         },
         []
       );
 
       const getQueryParams = useCallback(
-        (options: GetQueryParamsOptions<T, K, M> = {}): GetQueryParamsResult<T, K, M> => {
+        (
+          options: GetQueryParamsOptions<
+            T,
+            TInputRouteKey,
+            TCustomKeysDefinition
+          > = {}
+        ): GetQueryParamsResult<T, TInputRouteKey, TCustomKeysDefinition> => {
           if (ignoreQueryParams) {
             return { values: {} };
           }
 
-          let useDefualtValuesMap = {};
-          if (options?.useDefault){
-            useDefualtValuesMap = options.useDefault.reduce((sum, curr) => ({...sum, [curr]: true}), useDefualtValuesMap);
+          let useDefualtValuesMap = {} as {
+            [key in FilterInvalidParamKeys<
+              T[TInputRouteKey],
+              TCustomKeysDefinition
+            >]?: boolean;
+          };
+          if (options?.useDefault) {
+            useDefualtValuesMap = options.useDefault.reduce(
+              (sum, curr) => ({ ...sum, [curr]: true }),
+              useDefualtValuesMap
+            );
           }
 
           // const routeKey = key as string;
-          let result: Partial<GetValueTypeOfKeyProperty<T, K, M>> = {};
-          let errors: ParsingErrorResultType<T, K, M> = {};
+          let result: Partial<
+            GetValueTypeOfKeyProperty<T, TInputRouteKey, TCustomKeysDefinition>
+          > = {};
+          let errors: ParsingErrorResultType<
+            T,
+            TInputRouteKey,
+            TCustomKeysDefinition
+          > = {};
           const params = new URLSearchParams(query);
           Object.entries(routeMapping[key].typeKeyMapping).forEach(
             ([key, typeKeyValue]) => {
               const stringRouteValue = params.get(key);
 
+              const typedParamKey = key as InputParamKey;
+
               if (stringRouteValue) {
                 const typeKey = typeKeyValue as
-                  | ValidRouteParamPropertyTypeKeys
-                  | keyof M; //typeKeys[routeKey][key];
+                  | ValidQueryParamPropertyTypeKeys
+                  | keyof TCustomKeysDefinition;
 
-                // if (typeKey === "unknown") {
-                //   return;
-                // }
 
                 const typeKeyProps = possibleTypeMap[typeKey];
                 if (typeKeyProps !== undefined) {
                   try {
-                    result[key] = typeKeyProps.encodingMap.decode(
+                    result[typedParamKey] = typeKeyProps.encodingMap.decode(
                       stringRouteValue,
                       null
                     );
                   } catch (e) {
                     // failed to decode, probably because wrong type recieved from query string
-                    if (useDefualtValuesMap[key]){
+                    if (useDefualtValuesMap[typedParamKey]) {
                       const deafultValue = options?.defaults;
-                      result[key] =
-                        deafultValue ? deafultValue[key] : typeKeyProps.deafultValue;
-                    }else{
-                      errors[key] = {
-                        actualType: findTypeKeyOfString(stringRouteValue, possibleTypeMap),
+                      result[typedParamKey] = deafultValue
+                        ? deafultValue[typedParamKey]
+                        : typeKeyProps.deafultValue;
+                    } else {
+                      errors[typedParamKey] = {
+                        actualType: findTypeKeyOfString(
+                          stringRouteValue,
+                          possibleTypeMap
+                        ),
                         expectedType: typeKey,
                         errorStringValue: stringRouteValue,
                       };
@@ -233,12 +294,21 @@ export default <M extends {} = {}>(
         (
           options: ClearQueryParamsOptions<
             T,
-            K,
-            M,
-            keyof GetValueTypeOfKeyProperty<T, K, M>
+            TInputRouteKey,
+            TCustomKeysDefinition,
+            keyof GetValueTypeOfKeyProperty<
+              T,
+              TInputRouteKey,
+              TCustomKeysDefinition
+            >
           > = {}
         ) => {
-          const clearMap = {};
+          const clearMap = {} as {
+            [key in FilterInvalidParamKeys<
+              T[TInputRouteKey],
+              TCustomKeysDefinition
+            >]?: boolean;
+          };
           let shouldFilter = false;
 
           if (options?.include || options?.exclude) {
@@ -263,7 +333,8 @@ export default <M extends {} = {}>(
           setSearchParams((oldParams) => {
             const params = new URLSearchParams(oldParams);
             Object.keys(routeMapping[key].typeKeyMapping).forEach((key) => {
-              if (!shouldFilter || (shouldFilter && clearMap[key])) {
+              const typedParamKey = key as InputParamKey;
+              if (!shouldFilter || (shouldFilter && clearMap[typedParamKey])) {
                 params.delete(key);
               }
             });
