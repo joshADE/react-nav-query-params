@@ -171,7 +171,11 @@ export const { NavQueryContext, useNavQueryParams } = creator(
 const router = createBrowserRouter([ // from react router v6
   {
     path: "/",
-    element: <RouterPage />
+    element: <ReadingParams />
+  },
+    {
+    path: "/route1",
+    element: <NavigatingAndSettingParams />
   }
 ])
 
