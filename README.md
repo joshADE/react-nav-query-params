@@ -278,7 +278,6 @@ function isNumericRange(value: unknown): value is [number, number] {
 
 const { creator, activator } = createNavManager({
   customTypeKeyMapping: { // <- define custom type keys to encode and decode
-    customTypeKeyMapping: {
     numericRangeCustomType: {
       category: "custom", // <- always use "custom"
       sample: [1, 2] as [number, number], // <- sample value of the type
@@ -315,7 +314,6 @@ function isNumericRange(value) {
 
 const { creator, activator } = createNavManager({
   customTypeKeyMapping: { // <- define custom type keys to encode and decode
-    customTypeKeyMapping: {
     numericRangeCustomType: {
       category: "custom", // <- always use "custom"
       sample: [1, 2], // <- sample value of the type
