@@ -10,39 +10,45 @@
 npm install --save react-nav-query-params
 ```
 
-## Usage
+## Guide
 
+Note: This package is meant for mainly TypeScript users as it works best in in TypeScript based applications to type URL query parameters and group them based on routes. JavaScript user can still benefit from using this package, but they will not get all the advantages that the package has to offer.
+
+### Setup
+
+#### TypeScript(TS) Users
 ```tsx
 
 // import the function from the package
 import { createNavManager } from "react-nav-query-params";
 
-export type PagesType = "route1" | "route2" | "route3"; // could define strings or keys for your routes
+// (Optional) Define strings or keys for your routes
+export type RoutesType = "route1" | "route2" | "route3"; 
 
-
-export const RouteStringMapping = {
+// (Suggested) Create a variable to store your route strings
+export const Routes = {
   Route1: "route1",
   Route2: "route2",
   Route3: "route3",
-} satisfies { [key in string]?: PagesType };
+} satisfies { [key in string]?: RoutesType };
 
 // define the types of the query params that are passed or recieved in application
 // keys are strings correspond to different pages or components (route key)
-// values correspond to the name and type of the query params associated with route key
+// values correspond to the name and type of the query params associated with route key (ignore for JavaScript users)
 
-export interface QueryParamTypeMapping  {
-    [RouteStringMapping.Route1]: {
+
+export type QueryParamTypeMapping  { // <-- * use type
+    [Routes.Route1]: {
         param1: {[type in PagesType]?: boolean};
         param2: PagesType;
         param3: number[];
         param4: string;
-        param9: {[type in PagesType]?: boolean};
     },
-    [RouteStringMapping.Route2]: {
+    [Routes.Route2]: {
         param5: boolean;
         param6: number;
     },
-    [RouteStringMapping.Route3]: {
+    [Routes.Route3]: {
         param7: "first" | "second" | "third";
         param8: string;
     }
@@ -55,50 +61,30 @@ export interface QueryParamTypeMapping  {
 // * complex types => Record<string, SimpleType> | Date | Array<SimpleType>
 // * encoding/decoding is done based on type key (a key associated with a specific type)
 
-const { creator, activator } = createNavManager<{
-  myCustomObject: { 
-    [key: string]: number | string | boolean 
-  }
-}>({
-  customTypeKeyMapping: { // <- define custom type keys to encode and decode (if no custom type, leave as empty object)
-    myCustomObject: {
-      category: "custom", // <- always use "custom"
-      match: (v) => {     // <- specify a way to match for the type key given an unkown value (for error handling)
-        return typeof v === "object";
-      },
-      encodingMap: {      // <- specify a way to encode/decode type associated with key
-        encode: (v) => {
-          return JSON.stringify(v);
-        },
-        decode: (v) => {    // <- can throw an Error inside the decode function saying the string value cannot be decoded
-          return JSON.parse(v);
-        },
-      },
-      sample: {}        // <- sample value of the type
-    },
-  }
+const { creator, activator } = createNavManager({
+  customTypeKeyMapping: {}
 });
 
 // use the activator function returned to help enforce typescript's type checking / autocompletion
 // activator function helps to determine the corresponding type key used for encoding/decoding given the type of each params keys
-const routeMapping = activator<QueryParamTypeMapping>({
-  [RouteStringMapping.Route1]: {
+
+const routeMapping = activator<QueryParamTypeMapping>({ 
+  [Routes.Route1]: {
     typeKeyMapping: {
       param1: "booleanRecord", // <-- param key : type key (mapping)
       param2: "string",
       param3: "numberArray",
       param4: "string",
-      param9: "myCustomObject", // could also be booleanRecord type key
     },
-    programmaticNavigate: false, // only read the query params for this route when navigating programmatically if set to true
+    programmaticNavigate: false, // for reading query params (optional)
   },
-  [RouteStringMapping.Route2]: {
+  [Routes.Route2]: {
     typeKeyMapping: {
       param5: "boolean",
       param6: "number",
     },
   },
-  [RouteStringMapping.Route3]: {
+  [Routes.Route3]: {
     typeKeyMapping: {
       param7: "string",
       param8: "string",
@@ -108,21 +94,79 @@ const routeMapping = activator<QueryParamTypeMapping>({
 
 
 // call creator function with the routeMapping
-// and you will get back a context to wrap around application
+// and you will get back a context to wrap around application(optional)
+// as well as a hook to 'look up' functions that help manage each grouping of query params based on the route string provided
+
+export const { NavQueryContext, useNavQueryParams } = creator(
+  routeMapping
+);
+
+```
+
+
+#### JavaScript(JS) Users
+```jsx
+
+// import the function from the package
+import { createNavManager } from "react-nav-query-params";
+
+// (Suggested) Create a variable to store your route strings
+export const Routes = {
+  Route1: "route1",
+  Route2: "route2",
+  Route3: "route3",
+};
+
+// * there are limited types you can use with this package that are grouped into one 
+// * of two categories based on how encoding/decoding is handled
+// * simple types (SimpleType) => string | number | boolean | bigint
+// * complex types => Record<string, SimpleType> | Date | Array<SimpleType>
+// * encoding/decoding is done based on type key (a key associated with a specific type)
+
+const { creator, activator } = createNavManager({
+  customTypeKeyMapping: {}
+});
+
+
+const routeMapping = activator({ 
+  [Routes.Route1]: {
+    typeKeyMapping: {
+      param1: "booleanRecord", // <-- param key : type key (mapping)
+      param2: "string",
+      param3: "numberArray",
+      param4: "string",
+    },
+    programmaticNavigate: false, // for reading query params (optional)
+  },
+  [Routes.Route2]: {
+    typeKeyMapping: {
+      param5: "boolean",
+      param6: "number",
+    },
+  },
+  [Routes.Route3]: {
+    typeKeyMapping: {
+      param7: "string",
+      param8: "string",
+    },
+  },
+});
+
+
+// call creator function with the routeMapping
+// and you will get back a context to wrap around application(optional)
 // as well as a hook to 'look up' functions that help manage each grouping of query params based on the route key provided
 
 export const { NavQueryContext, useNavQueryParams } = creator(
-  routeMapping,
-  {}, // object of options you can pass to creator function (same as the 'value' prop in NavQueryContext.Provider) (this is an optional argument)
-  { // object of configurations passed to the creator function. Here, you can specify to use a custom encoding/decoding function for a specific type key (this is an optional argument)
-    validTypeEncodingMapOverride: {
-      stringRecord: {
-        defaultValue: {}, // set the default value for the stringRecord type key 
-      },
-    },
-  }
+  routeMapping
 );
 
+```
+
+
+
+### Usage(TS/JS Users)
+```tsx
 
 const router = createBrowserRouter([ // from react router v6
   {
@@ -131,28 +175,36 @@ const router = createBrowserRouter([ // from react router v6
   }
 ])
 
-const App = () => {
+function App(){
   return (
     <div className="App">
       <NavQueryContext.Provider value={{}}>
-      <RouterProvider router={router} />  {/* from react router v6 */}
+        <RouterProvider router={router} />  {/* from react router v6 */}
       </NavQueryContext.Provider>
     </div>
   );
 }
 
-const RouterPage = () => {
-    const { getQueryParams: getQueryParamsRoute1, clearQueryParams: clearQueryParamsRoute1 } = useNavQueryParams(RouteStringMapping.Route1);
-    const { getQueryParams: getQueryParamsRoute2, clearQueryParams: clearQueryParamsRoute2 } = useNavQueryParams(RouteStringMapping.Route2);
-    const { getQueryParams: getQueryParamsRoute3, clearQueryParams: clearQueryParamsRoute3 } = useNavQueryParams(RouteStringMapping.Route3);
+// A component where you read the query params
+function ReadingParams(){
+    const { getQueryParams: getQueryParamsRoute1, clearQueryParams: clearQueryParamsRoute1 } = useNavQueryParams(Routes.Route1);
+    const { getQueryParams: getQueryParamsRoute2, clearQueryParams: clearQueryParamsRoute2 } = useNavQueryParams(Routes.Route2);
+    const { getQueryParams: getQueryParamsRoute3, clearQueryParams: clearQueryParamsRoute3 } = useNavQueryParams(Routes.Route3);
+
+    // all functions returned by the hook are memoized using useCallback,
+    // getQueryParams has a dependency on the query string used in the url
+    // so if the query string changes, all effects with the function as a
+    // dependency will rerun
+
 
     useEffect(() => {
-        console.log("route1:", getQueryParamsRoute1()); // logs out route1: { values, errors } -> values.param1, and errors.param1, etc..., has object of options as first argument to use and set default values
-        clearQueryParamsRoute1(); // clears all query params from url associated with route1, has object of options as arguments to include/exclude param keys when clearing
+        console.log("route1:", getQueryParamsRoute1()); // logs out route1: { values, errors } -> values.param1, and errors.param1, etc...
+        clearQueryParamsRoute1(); // clears all query params from url associated with route1
         console.log("route2:", getQueryParamsRoute2());
         clearQueryParamsRoute2();
         console.log("route3:", getQueryParamsRoute3());
         clearQueryParamsRoute3();
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
@@ -164,22 +216,128 @@ const RouterPage = () => {
 }
 
 // In some other component...
-const { getQueryString  } = useNavQueryParams("route1");
+function NavigatingAndSettingParams() {
+  const { getQueryString  } = useNavQueryParams(Routes.Route1);
 
-const queryString = getQueryString({ param2: "route3", param1: { "route3": true }, param3: [10, 30] }, 
-{ // (optional argument)
-  replaceAllParams: true, // replace the current query params, when getting query string
-  full: true, // include the '?' in query string
-});
+  const queryString = getQueryString({ param2: "route3", param1: { "route3": true }, param3: [10, 30] }, 
+  { // (optional argument)
+    replaceAllParams: true, // replace the current query params, when getting query string
+    full: true, // include the '?' in query string
+  });
 
 
-const navigate = useNavigate(); // from react router v6
+  const navigate = useNavigate(); // from react router v6
 
-navigate("route3" + queryString);
-// "/route3?param2=route3&param3=10%2C30&..."
+ 
+    return (
+    <div>
+        <button onClick={() => navigate("route3" + queryString)}>Click Me</button>     
+    </div>
+  );
+}
 
-// see example/react-router-v6 folder for a more detailed and complete example
 ```
 
+### List of Type Keys & Types
+```tsx
+type TypeKeys = {
+  // simple types
+  "string": string;
+  "number": number;
+  "bigint": bigint;
+  "boolean": boolean;
+
+  // complex types
+  // array types
+  "stringArray": string[];
+  "numberArray": number[];
+  "bigintArray": bigint[];
+  "booleanArray": boolean[];
+  // record types
+  "stringRecord": Record<string, string>;
+  "numberRecord": Record<string, number>;
+  "bigintRecord": Record<string, bigint>;
+  "booleanRecord": Record<string, boolean>;
+  // date
+  "date": Date;
+};
+
+```
+
+
+### Custom Types / Type Keys
+
+#### TypeScript(TS) Users
+```tsx
+
+
+function isNumericRange(value: unknown): value is [number, number] {
+  return Array.isArray(value) && value.length === 2 && typeof value[0] === "number" && typeof value[1] === "number";
+}
+
+
+const { creator, activator } = createNavManager({
+  customTypeKeyMapping: { // <- define custom type keys to encode and decode
+    customTypeKeyMapping: {
+    numericRangeCustomType: {
+      category: "custom", // <- always use "custom"
+      sample: [1, 2] as [number, number], // <- sample value of the type
+      encodingMap: { // <- specify a way to encode/decode type associated with key
+        encode: (value) => {
+          return JSON.stringify(value);
+        },
+        decode: (value) => { // <- can throw an Error inside the decode function saying the string value cannot be decoded
+          const decoded = JSON.parse("["+value+"]"); 
+          if (!isNumericRange(decoded)) throw new Error("Error while decoding");
+          return decoded;
+        },
+      },
+      match: (value) => { // <- specify a way to match for the type key given an unknown value (for error handling)
+        return isNumericRange(value);
+      },
+    },
+  }
+});
+
+creator() / activator() //<-- now has access to custom type/type key
+
+```
+
+
+#### JavaScript(JS) Users
+```jsx
+
+
+function isNumericRange(value) {
+  return Array.isArray(value) && value.length === 2 && typeof value[0] === "number" && typeof value[1] === "number";
+}
+
+
+const { creator, activator } = createNavManager({
+  customTypeKeyMapping: { // <- define custom type keys to encode and decode
+    customTypeKeyMapping: {
+    numericRangeCustomType: {
+      category: "custom", // <- always use "custom"
+      sample: [1, 2], // <- sample value of the type
+      encodingMap: { // <- specify a way to encode/decode type associated with key
+        encode: (value) => {
+          return JSON.stringify(value);
+        },
+        decode: (value) => { // <- can throw an Error inside the decode function saying the string value cannot be decoded
+          const decoded = JSON.parse("["+value+"]"); 
+          if (!isNumericRange(decoded)) throw new Error("Error while decoding");
+          return decoded;
+        },
+      },
+      match: (value) => { // <- specify a way to match for the type key given an unknown value (for error handling)
+        return isNumericRange(value);
+      },
+    },
+  }
+});
+
+creator() / activator() //<-- now has access to custom type/type key
+
+```
 
 
