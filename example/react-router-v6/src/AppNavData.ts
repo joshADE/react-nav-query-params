@@ -36,46 +36,35 @@ export type RouteMapping = {
   };
 };
 
+function isCustomRecordType(
+  value: unknown
+): value is Record<string, number | string | boolean> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    Object.entries(value).every(([k, v]) => {
+        const kType = typeof k;
+        const vType = typeof v;
+        return (
+          kType === "string" &&
+          (vType === "string" || vType === "number" || vType === "boolean")
+        );
+      })
+  );
+}
+
 const { creator, activator } = createNavManager<{
-  myCustomObject: {
+  myCustomRecord: {
     [key: string]: number | string | boolean;
   };
 }>({
   customTypeKeyMapping: {
-    // homes: {
-    //   category: "custom",
-    //   encodingMap: {
-    //     encode: (v) => {
-    //       return v.prop1.toString() + "-" + v.prop2;
-    //     },
-    //     decode: (v) => {
-    //       const props = v.split("-");
-    //       if (props.length < 2) throw new Error("Error decoding homes");
-    //       return {
-    //         prop1: props.length > 0 ? Number(props[0]) : -1,
-    //         prop2: props.length > 1 ? props[1] : "error",
-    //       };
-    //     },
-    //   },
-    //   sample: { prop1: 23, prop2: "test" },
-    //   match: (value) => {
-    //     try {
-    //       if (!value || typeof value !== "object") return false;
-    //       if (!Object.hasOwn(value, "prop1") || !Object.hasOwn(value, "prop2"))
-    //         return false;
-    //       const v = value as { prop1: any; prop2: any };
-    //       return typeof v.prop1 === "number" && typeof v.prop2 === "string";
-    //     } catch {
-    //       return false;
-    //     }
-    //   },
-    // },
     // <- define custom type keys to encode and decode
-    myCustomObject: {
+    myCustomRecord: {
       category: "custom", // <- always use "custom"
       match: (v) => {
         // <- specify a way to match for the type key given an unkown value (error handling)
-        return typeof v === "object";
+        return isCustomRecordType(v);
       },
       encodingMap: {
         // <- specify a way to encode/decode type associated with key
@@ -84,10 +73,14 @@ const { creator, activator } = createNavManager<{
         },
         decode: (v) => {
           // <- can throw an Error inside the decode function saying the string value cannot be decoded
-          return JSON.parse(v);
+          const parsed = JSON.parse(v);
+          if (!isCustomRecordType(parsed)) {
+            throw new Error("Failed to decode myCustomRecord");
+          }
+          return parsed;
         },
       },
-      sample: {}, // <- sample value of the type
+      sample: {}, // <- sample value of the type (if you type sample using the 'as' keyword you dont have to specify the type above)
     },
   },
 });
@@ -99,7 +92,7 @@ const routeMapping = activator<RouteMapping>({
       numbers: "numberArray", // <-- param key : type key (mapping)
       focus: "string",
       salutation: "string",
-      display: "myCustomObject",
+      display: "myCustomRecord",
     },
     programmaticNavigate: false, // only read the query params for this route when naviating programmatically if set to true
   },

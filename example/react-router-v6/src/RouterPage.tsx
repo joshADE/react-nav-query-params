@@ -15,14 +15,13 @@ const RouterPage = ({
     const { getQueryParams: getQueryParamsPeople  } = useNavQueryParams("people");
 
     useEffect(() => {
-        console.log("root:", getQueryParamsRoot());
-        
-        console.log("home:", getQueryParamsHome());
-        
-        console.log("people:", getQueryParamsPeople());
-        
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+      console.log("root:", getQueryParamsRoot());
+      console.log("home:", getQueryParamsHome());
+
+      console.log("people:", getQueryParamsPeople());
+
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const getSubRouteComponenet = useCallback((t:PageType) => {
         switch(t){
@@ -40,21 +39,26 @@ const RouterPage = ({
     const { title, route } = PageRoutingData[type];
   return (
     <div className={styles["content"]}>
-        <div className={styles["titleWrapper"]}>
-            <h1>Viewing <span className={styles["code"]}>{title}</span> Page at <span className={styles["code"]}>&lt;{route}&gt;</span></h1>
+      <div className={styles["titleWrapper"]}>
+        <h1>
+          Viewing <span className={styles["code"]}>{title}</span> Page at{" "}
+          <span className={styles["code"]}>&lt;{route}&gt;</span>
+        </h1>
+      </div>
+      <div className={styles["container"]}>
+        <h3>Navigate To:</h3>
+        <p>
+          (Check the console to see the decoded query paramas from the last
+          visited page)
+        </p>
+        <div className={styles["navigations"]}>
+          {linkToOtherPages[type].map((elem) => {
+            return getSubRouteComponenet(elem);
+          })}
         </div>
-        <div className={styles["container"]}>
-            <h3>Navigate To:</h3>
-            <p>(Check the console to see the decoded query paramas from the last visited page)</p>
-            <div className={styles["navigations"]}>
-                {linkToOtherPages[type].map(elem => {
-                    return (getSubRouteComponenet(elem));
-                })}
-            </div>
-
-        </div>        
+      </div>
     </div>
-  )
+  );
 }
 
 export default RouterPage

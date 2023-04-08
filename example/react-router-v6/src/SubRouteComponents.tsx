@@ -14,7 +14,7 @@ const RootComponent = () => {
   }, [clearQueryParamsRoot]);
 
   const [focus, setFocus] = useState<RouteMapping["root"]["focus"]>("people");
-  const [display, setDisplay] = useState<RouteMapping["root"]["display"]>({ people: true });
+  const [display, setDisplay] = useState<RouteMapping["root"]["display"]>({people:true});
   const [numbers, setNumbers] = useState<RouteMapping["root"]["numbers"]>([10]);
   const [newNumber, setNewNumber] = useState<string>("0");
 
