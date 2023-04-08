@@ -54,9 +54,7 @@ function isCustomRecordType(
 }
 
 const { creator, activator } = createNavManager<{
-  myCustomRecord: {
-    [key: string]: number | string | boolean;
-  };
+  myCustomRecord: Record<string, number | string | boolean>;
 }>({
   customTypeKeyMapping: {
     // <- define custom type keys to encode and decode
@@ -73,11 +71,11 @@ const { creator, activator } = createNavManager<{
         },
         decode: (v) => {
           // <- can throw an Error inside the decode function saying the string value cannot be decoded
-          const parsed = JSON.parse(v);
-          if (!isCustomRecordType(parsed)) {
+          const decoded = JSON.parse(v);
+          if (!isCustomRecordType(decoded)) {
             throw new Error("Failed to decode myCustomRecord");
           }
-          return parsed;
+          return decoded;
         },
       },
       sample: {}, // <- sample value of the type (if you type sample using the 'as' keyword you dont have to specify the type above)
