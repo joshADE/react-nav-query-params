@@ -1,4 +1,5 @@
 import { createNavManager } from "react-nav-query-params";
+export type { Adapter } from "react-nav-query-params";
 
 export const PageRoutingData = {
   root: { key: "root", route: "/", title: "Main" },
@@ -43,13 +44,13 @@ function isCustomRecordType(
     typeof value === "object" &&
     value !== null &&
     Object.entries(value).every(([k, v]) => {
-        const kType = typeof k;
-        const vType = typeof v;
-        return (
-          kType === "string" &&
-          (vType === "string" || vType === "number" || vType === "boolean")
-        );
-      })
+      const kType = typeof k;
+      const vType = typeof v;
+      return (
+        kType === "string" &&
+        (vType === "string" || vType === "number" || vType === "boolean")
+      );
+    })
   );
 }
 
@@ -84,7 +85,7 @@ const { creator, activator } = createNavManager<{
 });
 
 // activator function helps to determine the corresponding type key given the type of the route keys and their params keys
-const routeMapping = activator<RouteMapping>({
+const routeMapping = activator({
   root: {
     typeKeyMapping: {
       numbers: "numberArray", // <-- param key : type key (mapping)

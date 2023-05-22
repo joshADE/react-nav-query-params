@@ -72,7 +72,6 @@ export type TypeKeyToTypeMapping = {
 
 export type ValidQueryParamPropertyTypeKeys = keyof TypeKeyToTypeMapping;
 
-
 export type FilterInvalidParamKeys<
   TInputQueryParamToTypeMapping,
   TCustomTypeKeysDefinition extends TCustomType = {}
@@ -117,7 +116,6 @@ export type GetTypeKeyOfCustomValueType<
     ? typeKey
     : never;
 }[keyof TCustomTypeKeysDefinition];
-
 
 export type CleanQueryParamMapKeys<
   TInputQueryParamMap extends {
@@ -172,7 +170,9 @@ export type InferTypeFromFromTypeKeys<
   TInputQueryParamMap extends {
     [routeKey in keyof TInputQueryParamMap]?: {
       [paramKey in keyof TInputQueryParamMap[routeKey]]?:
-        string | ValidQueryParamPropertyTypeKeys | keyof TCustomTypeKeysDefinition
+        | string
+        | ValidQueryParamPropertyTypeKeys
+        | keyof TCustomTypeKeysDefinition;
     };
   }
 > = {
@@ -251,16 +251,16 @@ export type InferRouteParamBaseType<
   >;
 };
 
-
 export function activator<
-TInputMapping extends TType<TCustomKeysDefinition> = TDefault,
-TCustomKeysDefinition extends TCustomType = {}
+  TInputMapping extends TType<TCustomKeysDefinition> = TDefault,
+  TCustomKeysDefinition extends TCustomType = {}
 >(routeMapping: RouteParamBaseType<TInputMapping, TCustomKeysDefinition>) {
   return routeMapping;
 }
 
 export type RouteMappingGlobalOptions = {
   programmaticNavigate?: boolean;
+  adapter?: Adapter;
 };
 
 export type RouteMappingCustomSetting<TCustomKeysDefinition extends {} = {}> = {
@@ -270,7 +270,6 @@ export type RouteMappingCustomSetting<TCustomKeysDefinition extends {} = {}> = {
     >;
   };
 };
-
 
 export type ValidTypeEncodingMapOverride = {
   [typeKey in ValidQueryParamPropertyTypeKeys]?: Partial<
@@ -282,7 +281,7 @@ export type RouteMappingConfiguration = {
   validTypeEncodingMapOverride?: ValidTypeEncodingMapOverride;
 };
 
-// options used when retrieving the query string 
+// options used when retrieving the query string
 export type QueryStringOptions<
   TInputMapping,
   TInputRouteKey extends keyof TInputMapping,
@@ -299,7 +298,7 @@ export type QueryStringOptions<
     : Partial<Record<TInputParamKey, number>>;
 };
 
-// options used when clearing the query params 
+// options used when clearing the query params
 export type ClearQueryParamsOptions<
   TInputMapping,
   TInputRouteKey extends keyof TInputMapping,
@@ -311,6 +310,7 @@ export type ClearQueryParamsOptions<
 > = {
   include?: TDefault extends TInputMapping ? string[] : TInputParamKey[];
   exclude?: TDefault extends TInputMapping ? string[] : TInputParamKey[];
+  behaviour?: "push" | "replace";
 };
 
 // result when there is an error decoding/parsing
@@ -319,17 +319,19 @@ export type ParsingErrorResultType<
   TInputRouteKey extends keyof TInputMapping,
   TCustomKeysDefinition extends {} = {}
 > = {
-  [key in TDefault extends TInputMapping ? string : FilterInvalidParamKeys<
-    TInputMapping[TInputRouteKey],
-    TCustomKeysDefinition
-  >]?: {
+  [key in TDefault extends TInputMapping
+    ? string
+    : FilterInvalidParamKeys<
+        TInputMapping[TInputRouteKey],
+        TCustomKeysDefinition
+      >]?: {
     expectedType: ValidQueryParamPropertyTypeKeys | keyof TCustomKeysDefinition;
     actualType: ValidQueryParamPropertyTypeKeys | keyof TCustomKeysDefinition;
     errorStringValue: string;
   };
 };
 
-// options used when retrieving the query params 
+// options used when retrieving the query params
 export type GetQueryParamsOptions<
   TInputMapping,
   TInputRouteKey extends keyof TInputMapping,
@@ -351,19 +353,21 @@ export type GetQueryParamsOptions<
       >[];
 };
 
-// result of retrieving the query params 
+// result of retrieving the query params
 export type GetQueryParamsResult<
   TInputMapping,
   TInputRouteKey extends keyof TInputMapping,
   TCustomKeysDefinition extends {} = {}
 > = {
-  values: TDefault extends TInputMapping ? { [key in string]?: any } : Partial<
-    GetValueTypeOfKeyProperty<
-      TInputMapping,
-      TInputRouteKey,
-      TCustomKeysDefinition
-    >
-  >;
+  values: TDefault extends TInputMapping
+    ? { [key in string]?: any }
+    : Partial<
+        GetValueTypeOfKeyProperty<
+          TInputMapping,
+          TInputRouteKey,
+          TCustomKeysDefinition
+        >
+      >;
   errors?: ParsingErrorResultType<
     TInputMapping,
     TInputRouteKey,
@@ -371,5 +375,12 @@ export type GetQueryParamsResult<
   >;
 };
 
+export type RouterLocation = {
+  search: string;
+};
 
-
+export type Adapter = {
+  location: RouterLocation;
+  pushLocation: (location: RouterLocation) => void;
+  replaceLocation: (location: RouterLocation) => void;
+};

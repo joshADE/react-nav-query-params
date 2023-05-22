@@ -1,42 +1,51 @@
-import React, { useCallback, useEffect } from 'react';
-import { PageType, PageRoutingData, linkToOtherPages, useNavQueryParams } from './AppNavData';
-import styles from "./RouterPage.module.css"
-import { PeopleComponent, HomeComponent, RootComponent } from './SubRouteComponents';
+import React, { useCallback, useEffect } from "react";
+import {
+  PageType,
+  PageRoutingData,
+  linkToOtherPages,
+  useNavQueryParams,
+} from "./AppNavData";
+import styles from "./RouterPage.module.css";
+import {
+  PeopleComponent,
+  HomeComponent,
+  RootComponent,
+} from "./SubRouteComponents";
 
 interface Props {
-    type: PageType,
+  type: PageType;
 }
 
-const RouterPage = ({
-    type,
-}:Props) => {
-    const { getQueryParams: getQueryParamsRoot  } = useNavQueryParams("root");
-    const { getQueryParams: getQueryParamsHome } = useNavQueryParams("home");
-    const { getQueryParams: getQueryParamsPeople  } = useNavQueryParams("people");
+const RouterPage = ({ type }: Props) => {
+  const { getQueryParams: getQueryParamsRoot, clearQueryParams } =
+    useNavQueryParams("root");
+  const { getQueryParams: getQueryParamsHome } = useNavQueryParams("home");
+  const { getQueryParams: getQueryParamsPeople } = useNavQueryParams("people");
 
-    useEffect(() => {
-      console.log("root:", getQueryParamsRoot());
-      console.log("home:", getQueryParamsHome());
+  useEffect(() => {
+    console.log("root:", getQueryParamsRoot());
+    clearQueryParams({ include: [] });
+    console.log("home:", getQueryParamsHome());
 
-      console.log("people:", getQueryParamsPeople());
+    console.log("people:", getQueryParamsPeople());
 
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    const getSubRouteComponenet = useCallback((t:PageType) => {
-        switch(t){
-            case "root":
-                return <RootComponent key={t} />;
-            case "home":
-                return <HomeComponent key={t} />;
-            case "people":
-                return <PeopleComponent key={t} />;
-            default:
-                return <></>;
-        }
-    }, [])
+  const getSubRouteComponenet = useCallback((t: PageType) => {
+    switch (t) {
+      case "root":
+        return <RootComponent key={t} />;
+      case "home":
+        return <HomeComponent key={t} />;
+      case "people":
+        return <PeopleComponent key={t} />;
+      default:
+        return <></>;
+    }
+  }, []);
 
-    const { title, route } = PageRoutingData[type];
+  const { title, route } = PageRoutingData[type];
   return (
     <div className={styles["content"]}>
       <div className={styles["titleWrapper"]}>
@@ -59,6 +68,6 @@ const RouterPage = ({
       </div>
     </div>
   );
-}
+};
 
-export default RouterPage
+export default RouterPage;

@@ -1,6 +1,4 @@
-export {
-    default as createNavManager,
-} from "./useGenericNavQueryParams";
+export { default as createNavManager } from "./useGenericNavQueryParams";
 
 export {
   activator,
@@ -8,5 +6,6 @@ export {
   QueryStringOptions,
   RouteParamBaseType,
   ValidQueryParamPropertyTypeKeys,
+  Adapter,
+  RouterLocation,
 } from "./types";
-

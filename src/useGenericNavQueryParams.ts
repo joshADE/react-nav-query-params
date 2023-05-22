@@ -1,5 +1,4 @@
 import { useMemo, createContext, useContext, useCallback } from "react";
-import { useLocation, useSearchParams } from "react-router-dom";
 import { validTypeMap } from "./data";
 import {
   ClearQueryParamsOptions,
@@ -26,17 +25,30 @@ import { findTypeKeyOfString } from "./utils";
 
 let loadedByUser = true;
 
-
-
-
-export default <TCustomKeysDefinition extends { [customTypeKey: string]: any } = {}>(
+export default <
+  TCustomKeysDefinition extends { [customTypeKey: string]: any } = {}
+>(
   customSettings: RouteMappingCustomSetting<TCustomKeysDefinition>
 ) => {
-
   type KeyType = string;
-  type ValueType = TCustomKeysDefinition[keyof TCustomKeysDefinition] | TypeKeyToTypeMapping[keyof TypeKeyToTypeMapping];
-  type TType = { [routeKey in KeyType]?: { [paramKey in KeyType]?: ValueType } };
+  type ValueType =
+    | TCustomKeysDefinition[keyof TCustomKeysDefinition]
+    | TypeKeyToTypeMapping[keyof TypeKeyToTypeMapping];
+  type TType = {
+    [routeKey in KeyType]?: { [paramKey in KeyType]?: ValueType };
+  };
   type TDefault = { [routeKey in KeyType]?: { [paramKey in KeyType]?: any } };
+
+  // type InferKey<G extends TType, H extends keyof G, I extends keyof G[H]> = {
+  //   [routeKey in H]?: { [paramKey in I]?: any };
+  // };
+
+  // type ExcludeString<T> = T | Exclude<T, string>;
+  // type ExcludeStringKeys<K1 extends string, K2 extends string, G extends TType<K1, K2>> = {
+  //   [routeKey in ExcludeString<keyof G>]?: {
+  //     [paramKey in ExcludeString<keyof G[routeKey]>]?: G[routeKey][paramKey];
+  //   };
+  // };
 
   const activator = <T extends TType = TDefault>(
     v: RouteParamBaseType<T, TCustomKeysDefinition>
@@ -47,9 +59,8 @@ export default <TCustomKeysDefinition extends { [customTypeKey: string]: any } =
   const creator = <T extends TType>(
     routeMapping: RouteParamBaseType<T, TCustomKeysDefinition>,
     initialOptions: RouteMappingGlobalOptions = {},
-    configurations: RouteMappingConfiguration = {},
+    configurations: RouteMappingConfiguration = {}
   ) => {
-    
     const NavQueryContext =
       createContext<Partial<RouteMappingGlobalOptions>>(initialOptions);
 
@@ -84,7 +95,6 @@ export default <TCustomKeysDefinition extends { [customTypeKey: string]: any } =
       ...(customSettings?.customTypeKeyMapping ?? {}),
       ...validTypeMapWithOverrides,
     };
-    // const encodingOptions = configurations.encodingOptions;
 
     const initialize = () => {
       // console.log("from: ",loadedByUser);
@@ -92,52 +102,35 @@ export default <TCustomKeysDefinition extends { [customTypeKey: string]: any } =
       // console.log("to: ",loadedByUser);
     };
 
-    window.history.pushState = new Proxy(window.history.pushState, {
-      apply: (target, thisArg, argArray) => {
-        // trigger here what you need
-        initialize();
-        return target.apply(thisArg, argArray);
-      },
-    });
-    window.history.replaceState = new Proxy(window.history.replaceState, {
-      apply: (target, thisArg, argArray) => {
-        // trigger here what you need
-        initialize();
-        return target.apply(thisArg, argArray);
-      },
-    });
+    if (initialOptions.adapter?.pushLocation) {
+      initialOptions.adapter.pushLocation = new Proxy(
+        initialOptions.adapter.pushLocation,
+        {
+          apply: (target, thisArg, argArray) => {
+            // trigger here what you need
+            initialize();
+            return target.apply(thisArg, argArray);
+          },
+        }
+      );
+    }
 
-    // const typeKeysMapping =
-    // Object.fromEntries(Object.entries(routeMapping).map(([routeKey, paramMap]) => {
-    //     const rK = routeKey as keyof T ;
-    //     const map = paramMap as RouteParamBaseTypeValue<T, keyof T, TCustomKeysDefinition>;
-    //     return [rK, map.typeKeyMapping];
-    // }));
-
-
-
-    // type Map = typeof routeMapping;
-    // type InnerMap<K extends keyof Map> = typeof routeMapping[K]["typeKeyMapping"] ;
-    // type P = { [routeKey in keyof Map]: { [paramKey in keyof InnerMap<routeKey>]: keyof TCustomKeysDefinition | ValidQueryParamPropertyTypeKeys } };
-    // type S = TDefault extends T
-    //   ? typeof routeMapping extends InferRouteParamBaseType<
-    //       infer Q,
-    //       TCustomKeysDefinition
-    //     >
-    //     ? InferTypeFromFromTypeKeys<TCustomKeysDefinition, Q>
-    //     : InferTypeFromFromTypeKeys<
-    //         TCustomKeysDefinition,
-    //         typeof typeKeysMapping
-    //       >
-    //   : T;
-      
+    if (initialOptions.adapter?.replaceLocation) {
+      initialOptions.adapter.replaceLocation = new Proxy(
+        initialOptions.adapter.replaceLocation,
+        {
+          apply: (target, thisArg, argArray) => {
+            // trigger here what you need
+            initialize();
+            return target.apply(thisArg, argArray);
+          },
+        }
+      );
+    }
 
     const useNavQueryParams = <TInputRouteKey extends keyof T>(
       key: TInputRouteKey
     ) => {
-      const [_, setSearchParams] = useSearchParams();
-      const { search } = useLocation();
-
       type InputParamKey = FilterInvalidParamKeys<
         T[TInputRouteKey],
         TCustomKeysDefinition
@@ -149,6 +142,8 @@ export default <TCustomKeysDefinition extends { [customTypeKey: string]: any } =
         ...initialOptions,
         ...currentOptions,
       };
+
+      const { adapter } = overridedOptions;
 
       const { programmaticNavigate } = overridedOptions;
 
@@ -163,6 +158,14 @@ export default <TCustomKeysDefinition extends { [customTypeKey: string]: any } =
         routeMapping[key].programmaticNavigate,
         loadedByUser,
       ]);
+
+      if (!adapter) {
+        throw new Error(
+          "useNavQueryParams must be provided with an adapter in the context."
+        );
+      }
+
+      const { search } = adapter.location;
 
       const query = useMemo(() => new URLSearchParams(search), [search]);
 
@@ -346,18 +349,20 @@ export default <TCustomKeysDefinition extends { [customTypeKey: string]: any } =
             );
           }
 
-          setSearchParams((oldParams) => {
-            const params = new URLSearchParams(oldParams);
-            Object.keys(routeMapping[key].typeKeyMapping).forEach((key) => {
-              const typedParamKey = key as InputParamKey;
-              if (!shouldFilter || (shouldFilter && clearMap[typedParamKey])) {
-                params.delete(key);
-              }
-            });
-            return params;
+          const params = new URLSearchParams(query);
+          Object.keys(routeMapping[key].typeKeyMapping).forEach((key) => {
+            const typedParamKey = key as InputParamKey;
+            if (!shouldFilter || (shouldFilter && clearMap[typedParamKey])) {
+              params.delete(key);
+            }
           });
+          if (options.behaviour === "push") {
+            adapter.pushLocation({ search: params.toString() });
+          } else {
+            adapter.replaceLocation({ search: params.toString() });
+          }
         },
-        []
+        [query]
       );
 
       const getRouteMapping = useCallback(() => {
@@ -383,4 +388,3 @@ export default <TCustomKeysDefinition extends { [customTypeKey: string]: any } =
     creator,
   };
 };
-  
