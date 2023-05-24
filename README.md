@@ -39,8 +39,8 @@ export const Routes = {
 
 export type QueryParamTypeMapping  { // <-- * use type
     [Routes.Route1]: {
-        param1: {[type in PagesType]?: boolean};
-        param2: PagesType;
+        param1: {[type in RoutesType]?: boolean};
+        param2: RoutesType;
         param3: number[];
         param4: string;
     },
@@ -168,24 +168,70 @@ export const { NavQueryContext, useNavQueryParams } = creator(
 ### Usage(TS/JS Users)
 ```tsx
 
+// (example using react router v6, but could be adapted for other routing solutions)
 const router = createBrowserRouter([ // from react router v6
   {
-    path: "/",
-    element: <ReadingParams />
-  },
-    {
-    path: "/route1",
-    element: <NavigatingAndSettingParams />
-  }
+      path: "/",
+      element: <RouteBasePage />,
+      children: [{
+          path: "/",
+          element: <ReadingParams />,
+          index: true,
+        },
+        {
+          path: "/route1",
+          element: <NavigatingAndSettingParams />
+        }]
+    }
 ])
 
+// In the root App component... 
 function App(){
   return (
     <div className="App">
-      <NavQueryContext.Provider value={{}}>
         <RouterProvider router={router} />  {/* from react router v6 */}
-      </NavQueryContext.Provider>
     </div>
+  );
+}
+
+
+
+// In a child component of the app component need to create an adapter object that tells this package how to manage history and location
+// need access to the navigate / location data from react router v6 package
+
+import { Adapter } from "react-nav-query-params"; //<-- TS users only
+import { useLocation, useNavigate, Outlet } from "react-router-dom"; //<-- react router v6 users only
+
+function RouteBasePage(){
+  // the following is specific to react-router-v6 and might look different for each routing solution, 
+  // but the adapter created needs to be provided in a similar manner into the NavQueryContext.Provider or else the useNavQueryParams hook will not work
+  const location = useLocation(); // <-- for react-router, can only be called in a child component of RouterProvider
+  const navigate = useNavigate(); // <-- for react-router, can only be called in a child component of RouterProvider
+
+  const adapter = useMemo(() => { //<-- JS users, const adapter = useMemo<Adapter>(() => { //<-- TS users
+    return {
+      location: location,
+      pushLocation: (l) => { // the type of 'l' here is Adapter["location"] for TS users
+        if (l.search !== null || l.search !== undefined)
+          navigate("?" + l.search, { replace: false });
+      },
+      replaceLocation: (l) => {
+        if (l.search !== null || l.search !== undefined)
+          navigate("?" + l.search, { replace: true });
+      },
+    };
+  }, [location, navigate]);
+  
+  return (
+    <NavQueryContext.Provider
+      value={{
+        adapter: adapter,
+      }}
+    >
+      <div>
+        <Outlet />
+      </div>
+    </NavQueryContext.Provider>
   );
 }
 
@@ -235,7 +281,7 @@ function NavigatingAndSettingParams() {
  
     return (
     <div>
-        <button onClick={() => navigate("route3" + queryString)}>Click Me</button>     
+        <button onClick={() => navigate("/route1" + queryString)}>Click Me</button>     
     </div>
   );
 }
