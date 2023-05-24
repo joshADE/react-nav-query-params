@@ -93,7 +93,7 @@ const routeMapping = activator({
       salutation: "string",
       display: "myCustomRecord",
     },
-    programmaticNavigate: false, // only read the query params for this route when naviating programmatically if set to true
+    programmaticNavigate: true, // only read the query params for this route when naviating programmatically if set to true
   },
   home: {
     typeKeyMapping: {

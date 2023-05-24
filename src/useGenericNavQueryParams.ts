@@ -102,31 +102,21 @@ export default <
       // console.log("to: ",loadedByUser);
     };
 
-    if (initialOptions.adapter?.pushLocation) {
-      initialOptions.adapter.pushLocation = new Proxy(
-        initialOptions.adapter.pushLocation,
-        {
-          apply: (target, thisArg, argArray) => {
-            // trigger here what you need
-            initialize();
-            return target.apply(thisArg, argArray);
-          },
-        }
-      );
-    }
+    window.history.pushState = new Proxy(window.history.pushState, {
+      apply: (target, thisArg, argArray) => {
+        // trigger here what you need
+        initialize();
+        return target.apply(thisArg, argArray);
+      },
+    });
 
-    if (initialOptions.adapter?.replaceLocation) {
-      initialOptions.adapter.replaceLocation = new Proxy(
-        initialOptions.adapter.replaceLocation,
-        {
-          apply: (target, thisArg, argArray) => {
-            // trigger here what you need
-            initialize();
-            return target.apply(thisArg, argArray);
-          },
-        }
-      );
-    }
+    window.history.replaceState = new Proxy(window.history.replaceState, {
+      apply: (target, thisArg, argArray) => {
+        // trigger here what you need
+        initialize();
+        return target.apply(thisArg, argArray);
+      },
+    });
 
     const useNavQueryParams = <TInputRouteKey extends keyof T>(
       key: TInputRouteKey
@@ -356,10 +346,11 @@ export default <
               params.delete(key);
             }
           });
+          const stringParams = params.toString();
           if (options.behaviour === "push") {
-            adapter.pushLocation({ search: params.toString() });
+            adapter.pushLocation({ search: stringParams });
           } else {
-            adapter.replaceLocation({ search: params.toString() });
+            adapter.replaceLocation({ search: stringParams });
           }
         },
         [query]
