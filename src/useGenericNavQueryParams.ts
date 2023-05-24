@@ -1,4 +1,10 @@
-import { useMemo, createContext, useContext, useCallback } from "react";
+import {
+  useMemo,
+  createContext,
+  useContext,
+  useCallback,
+  useEffect,
+} from "react";
 import { validTypeMap } from "./data";
 import {
   ClearQueryParamsOptions,
@@ -102,22 +108,6 @@ export default <
       // console.log("to: ",loadedByUser);
     };
 
-    window.history.pushState = new Proxy(window.history.pushState, {
-      apply: (target, thisArg, argArray) => {
-        // trigger here what you need
-        initialize();
-        return target.apply(thisArg, argArray);
-      },
-    });
-
-    window.history.replaceState = new Proxy(window.history.replaceState, {
-      apply: (target, thisArg, argArray) => {
-        // trigger here what you need
-        initialize();
-        return target.apply(thisArg, argArray);
-      },
-    });
-
     const useNavQueryParams = <TInputRouteKey extends keyof T>(
       key: TInputRouteKey
     ) => {
@@ -148,6 +138,10 @@ export default <
         routeMapping[key].programmaticNavigate,
         loadedByUser,
       ]);
+
+      useEffect(() => {
+        initialize();
+      }, []);
 
       if (!adapter) {
         throw new Error(
