@@ -10,10 +10,14 @@ const RouteBasePage = () => {
   const adapter = useMemo<Adapter>(() => {
     return {
       location: location,
-      pushLocation: (l: Adapter["location"]) =>
-        l.search ? navigate("?" + l.search, { replace: false }) : {},
-      replaceLocation: (l: Adapter["location"]) =>
-        l.search ? navigate("?" + l.search, { replace: true }) : {},
+      pushLocation: (l: Adapter["location"]) => {
+        if (l.search !== null || l.search !== undefined)
+          navigate("?" + l.search, { replace: false });
+      },
+      replaceLocation: (l: Adapter["location"]) => {
+        if (l.search !== null || l.search !== undefined)
+          navigate("?" + l.search, { replace: true });
+      },
     };
   }, [location, navigate]);
   return (
