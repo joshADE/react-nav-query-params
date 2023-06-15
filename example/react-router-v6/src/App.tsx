@@ -21,7 +21,7 @@ const router = createBrowserRouter(
   ],
   {
     basename: window.location.href.includes("github")
-      ? "/react-nav-query-params/route1"
+      ? "/react-nav-query-params/"
       : "/", // for deployment to gh-pages to load resources
   }
 );

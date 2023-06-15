@@ -2,7 +2,7 @@ import { createNavManager } from "react-nav-query-params";
 export type { Adapter } from "react-nav-query-params";
 
 export const PageRoutingData = {
-  route1: { key: "route1", route: "/route1", title: "Route1" },
+  route1: { key: "route1", route: "/", title: "Route1" },
   route2: { key: "route2", route: "/route2", title: "Route2" },
   route3: { key: "route3", route: "/route3", title: "Route3" },
 };
