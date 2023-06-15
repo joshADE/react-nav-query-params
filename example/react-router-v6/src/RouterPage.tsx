@@ -7,9 +7,9 @@ import {
 } from "./AppNavData";
 import styles from "./RouterPage.module.css";
 import {
-  PeopleComponent,
-  HomeComponent,
-  RootComponent,
+  Route1Component,
+  Route2Component,
+  Route3Component,
 } from "./SubRouteComponents";
 
 interface Props {
@@ -17,29 +17,29 @@ interface Props {
 }
 
 const RouterPage = ({ type }: Props) => {
-  const { getQueryParams: getQueryParamsRoot, clearQueryParams } =
-    useNavQueryParams("root");
-  const { getQueryParams: getQueryParamsHome } = useNavQueryParams("home");
-  const { getQueryParams: getQueryParamsPeople } = useNavQueryParams("people");
+  const { getQueryParams: getQueryParamsRoute1, clearQueryParams } =
+    useNavQueryParams("route1");
+  const { getQueryParams: getQueryParamsRoute2 } = useNavQueryParams("route2");
+  const { getQueryParams: getQueryParamsRoute3 } = useNavQueryParams("route3");
 
   useEffect(() => {
-    console.log("root:", getQueryParamsRoot());
+    console.log("route1:", getQueryParamsRoute1());
     clearQueryParams({ behaviour: "replace" });
-    console.log("home:", getQueryParamsHome());
+    console.log("route2:", getQueryParamsRoute2());
 
-    console.log("people:", getQueryParamsPeople());
+    console.log("route3:", getQueryParamsRoute3());
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getSubRouteComponenet = useCallback((t: PageType) => {
     switch (t) {
-      case "root":
-        return <RootComponent key={t} />;
-      case "home":
-        return <HomeComponent key={t} />;
-      case "people":
-        return <PeopleComponent key={t} />;
+      case "route1":
+        return <Route1Component key={t} />;
+      case "route2":
+        return <Route2Component key={t} />;
+      case "route3":
+        return <Route3Component key={t} />;
       default:
         return <></>;
     }

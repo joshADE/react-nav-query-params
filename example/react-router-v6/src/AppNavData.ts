@@ -2,17 +2,17 @@ import { createNavManager } from "react-nav-query-params";
 export type { Adapter } from "react-nav-query-params";
 
 export const PageRoutingData = {
-  root: { key: "root", route: "/", title: "Main" },
-  home: { key: "home", route: "/home", title: "Home" },
-  people: { key: "people", route: "/people", title: "People" },
+  route1: { key: "route1", route: "/route1", title: "Route1" },
+  route2: { key: "route2", route: "/route2", title: "Route2" },
+  route3: { key: "route3", route: "/route3", title: "Route3" },
 };
 
 export const linkToOtherPages: {
   [type in PageType]: Exclude<PageType, type>[];
 } = {
-  root: ["people", "home"],
-  home: ["root"],
-  people: ["root", "home"],
+  route1: ["route2", "route3"],
+  route2: ["route1"],
+  route3: ["route1", "route2"],
 };
 
 export type PageType = keyof typeof PageRoutingData;
@@ -20,18 +20,18 @@ export type PageType = keyof typeof PageRoutingData;
 // do not include optional types in the route mapping object type
 
 export type RouteMapping = {
-  root: {
+  route1: {
     // <-- route key
     display: { [type in PageType]?: boolean }; // <-- param key
     focus: PageType;
     numbers: number[];
     salutation: string;
   };
-  home: {
+  route2: {
     openModal: boolean;
     defaultViewCount: number;
   };
-  people: {
+  route3: {
     trigger: "first" | "second" | "third";
     name: string;
   };
@@ -86,7 +86,7 @@ const { creator, activator } = createNavManager<{
 
 // activator function helps to determine the corresponding type key given the type of the route keys and their params keys
 const routeMapping = activator({
-  root: {
+  route1: {
     typeKeyMapping: {
       numbers: "numberArray", // <-- param key : type key (mapping)
       focus: "string",
@@ -95,13 +95,13 @@ const routeMapping = activator({
     },
     programmaticNavigate: true, // only read the query params for this route when naviating programmatically if set to true
   },
-  home: {
+  route2: {
     typeKeyMapping: {
       openModal: "boolean",
       defaultViewCount: "number",
     },
   },
-  people: {
+  route3: {
     typeKeyMapping: {
       trigger: "string",
       name: "string",

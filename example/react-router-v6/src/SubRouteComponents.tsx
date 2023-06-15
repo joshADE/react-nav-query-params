@@ -8,27 +8,28 @@ import {
 import Button from "./Button";
 import styles2 from "./SubRouteComponent.module.css";
 
-const RootComponent = () => {
-  const type = "root";
-
+const Route1Component = () => {
+  const type = "route1";
   const { title, route } = PageRoutingData[type];
   const {
-    getQueryString: getQueryStringRoot,
-    clearQueryParams: clearQueryParamsRoot,
-  } = useNavQueryParams(type);
+    getQueryString: getQueryStringRoute1,
+    clearQueryParams: clearQueryParamsRoute1,
+  } = useNavQueryParams("route1");
   useEffect(() => {
-    clearQueryParamsRoot();
-  }, [clearQueryParamsRoot]);
+    clearQueryParamsRoute1({ include: [] });
+  }, [clearQueryParamsRoute1]);
 
-  const [focus, setFocus] = useState<RouteMapping["root"]["focus"]>("people");
-  const [display, setDisplay] = useState<RouteMapping["root"]["display"]>({
-    people: true,
+  const [focus, setFocus] = useState<RouteMapping["route1"]["focus"]>("route1");
+  const [display, setDisplay] = useState<RouteMapping["route1"]["display"]>({
+    route1: true,
   });
-  const [numbers, setNumbers] = useState<RouteMapping["root"]["numbers"]>([10]);
+  const [numbers, setNumbers] = useState<RouteMapping["route1"]["numbers"]>([
+    10,
+  ]);
   const [newNumber, setNewNumber] = useState<string>("0");
 
   const queryString = useMemo(() => {
-    return getQueryStringRoot(
+    return getQueryStringRoute1(
       {
         focus,
         display,
@@ -36,7 +37,7 @@ const RootComponent = () => {
       },
       { replaceAllParams: true }
     );
-  }, [focus, getQueryStringRoot, display, numbers]);
+  }, [focus, getQueryStringRoute1, display, numbers]);
 
   return (
     <div className={styles2["section"]}>
@@ -153,35 +154,35 @@ const RootComponent = () => {
       <Button
         to={route}
         isParamButton
-        queryParamString={queryString + "&salutation=John"}
+        queryParamString={queryString + "&salutation=testextraqueryparam"}
       />
     </div>
   );
 };
 
-const HomeComponent = () => {
-  const type = "home";
+const Route2Component = () => {
+  const type = "route2";
 
   const { title, route } = PageRoutingData[type];
   const {
-    getQueryString: getQueryStringHome,
-    clearQueryParams: clearQueryParamsHome,
+    getQueryString: getQueryStringRoute2,
+    clearQueryParams: clearQueryParamsRoute2,
   } = useNavQueryParams(type);
   useEffect(() => {
-    clearQueryParamsHome();
-  }, [clearQueryParamsHome]);
+    clearQueryParamsRoute2();
+  }, [clearQueryParamsRoute2]);
 
   const [defaultViewCount, setDefaultViewCount] =
-    useState<RouteMapping["home"]["defaultViewCount"]>(1);
+    useState<RouteMapping["route2"]["defaultViewCount"]>(1);
   const [openModal, setOpenModal] =
-    useState<RouteMapping["home"]["openModal"]>(false);
+    useState<RouteMapping["route2"]["openModal"]>(false);
 
   const queryString = useMemo(() => {
-    return getQueryStringHome(
+    return getQueryStringRoute2(
       { defaultViewCount, openModal },
       { replaceAllParams: true }
     );
-  }, [defaultViewCount, getQueryStringHome, openModal]);
+  }, [defaultViewCount, getQueryStringRoute2, openModal]);
   return (
     <div className={styles2["section"]}>
       <h5 className={styles2["section-title"]}>{title}</h5>
@@ -229,28 +230,28 @@ const HomeComponent = () => {
   );
 };
 
-const PeopleComponent = () => {
-  const type = "people";
+const Route3Component = () => {
+  const type = "route3";
 
   const { title, route } = PageRoutingData[type];
   const {
-    getQueryString: getQueryStringPeople,
-    clearQueryParams: clearQueryParamsPeople,
+    getQueryString: getQueryStringRoute3,
+    clearQueryParams: clearQueryParamsRoute3,
   } = useNavQueryParams(type);
   useEffect(() => {
-    clearQueryParamsPeople({ exclude: ["name"] });
-  }, [clearQueryParamsPeople]);
+    clearQueryParamsRoute3({ exclude: ["name"] });
+  }, [clearQueryParamsRoute3]);
 
-  const [name, setName] = useState<RouteMapping["people"]["name"]>("John");
+  const [name, setName] = useState<RouteMapping["route3"]["name"]>("Bob");
   const [trigger, setTrigger] =
-    useState<RouteMapping["people"]["trigger"]>("first");
+    useState<RouteMapping["route3"]["trigger"]>("first");
 
   const queryString = useMemo(() => {
-    return getQueryStringPeople(
+    return getQueryStringRoute3(
       { name, trigger },
       { replaceAllParams: true, keyOrder: { trigger: -1 } }
     );
-  }, [name, getQueryStringPeople, trigger]);
+  }, [name, getQueryStringRoute3, trigger]);
 
   return (
     <div className={styles2["section"]}>
@@ -299,4 +300,4 @@ const PeopleComponent = () => {
   );
 };
 
-export { RootComponent, HomeComponent, PeopleComponent };
+export { Route1Component, Route2Component, Route3Component };

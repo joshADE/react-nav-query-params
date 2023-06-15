@@ -8,11 +8,11 @@ const router = createBrowserRouter(
     {
       path: "/",
       element: <RouteBasePage />,
-      children: Object.entries(PageRoutingData).map(([key, value]) => {
+      children: Object.entries(PageRoutingData).map(([key, value], i) => {
         const { route } = value;
         const tyepKey = key as PageType;
         return {
-          index: route === "/",
+          index: route === "/route1",
           path: route,
           element: <RouterPage key={tyepKey} type={tyepKey} />,
         };
@@ -21,7 +21,7 @@ const router = createBrowserRouter(
   ],
   {
     basename: window.location.href.includes("github")
-      ? "/react-nav-query-params/"
+      ? "/react-nav-query-params/route1"
       : "/", // for deployment to gh-pages to load resources
   }
 );
