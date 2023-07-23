@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   PageType,
   PageRoutingData,
@@ -17,22 +17,20 @@ interface Props {
 }
 
 const RouterPage = ({ type }: Props) => {
-  const {
-    getQueryParams: getQueryParamsRoute1,
-    clearQueryParams,
-  } = useNavQueryParams("route1");
+  const { getQueryParams: getQueryParamsRoute1 } = useNavQueryParams("route1");
   const { getQueryParams: getQueryParamsRoute2 } = useNavQueryParams("route2");
   const { getQueryParams: getQueryParamsRoute3 } = useNavQueryParams("route3");
 
-  useEffect(() => {
-    console.log("route1:", getQueryParamsRoute1());
-    clearQueryParams({ behavior: "replace" });
-    console.log("route2:", getQueryParamsRoute2());
+  const data = useMemo(() => {
+    const route1 = ("route1: " + JSON.stringify(getQueryParamsRoute1(), null, 2));
 
-    console.log("route3:", getQueryParamsRoute3());
+    const route2 = ("route2: " + JSON.stringify(getQueryParamsRoute2(), null, 2));
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const route3 = ("route3: " + JSON.stringify(getQueryParamsRoute3(), null, 2));
+
+  
+    return `${route1}\n\n${route2}\n\n${route3}`;
+  }, [getQueryParamsRoute1, getQueryParamsRoute2, getQueryParamsRoute3]);
 
   const getSubRouteComponenet = useCallback((t: PageType) => {
     switch (t) {
@@ -55,6 +53,15 @@ const RouterPage = ({ type }: Props) => {
           Viewing <span className={styles["code"]}>{title}</span> Page at{" "}
           <span className={styles["code"]}>&lt;{route}&gt;</span>
         </h1>
+      </div>
+      <div className={styles["textarea-wrapper"]}>
+        <textarea
+          cols={100}
+          className={styles["textarea"]} 
+          readOnly
+          value={data}
+          
+        />
       </div>
       <div className={styles["container"]}>
         <h3>Navigate To:</h3>

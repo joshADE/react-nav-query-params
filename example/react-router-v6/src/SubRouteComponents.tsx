@@ -19,9 +19,9 @@ const Route1Component = () => {
     clearQueryParamsRoute1({ include: [] });
   }, [clearQueryParamsRoute1]);
 
-  const [focus, setFocus] = useState<RouteMapping["route1"]["focus"]>("route1");
+  const [focus, setFocus] = useState<RouteMapping["route1"]["focus"]>("route2");
   const [display, setDisplay] = useState<RouteMapping["route1"]["display"]>({
-    route1: true,
+    route2: true,
   });
   const [numbers, setNumbers] = useState<RouteMapping["route1"]["numbers"]>([
     10,
@@ -154,7 +154,7 @@ const Route1Component = () => {
       <Button
         to={route}
         isParamButton
-        queryParamString={queryString + "&salutation=testextraqueryparam"}
+        queryParamString={queryString}
       />
     </div>
   );
