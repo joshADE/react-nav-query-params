@@ -17,8 +17,10 @@ interface Props {
 }
 
 const RouterPage = ({ type }: Props) => {
-  const { getQueryParams: getQueryParamsRoute1, clearQueryParams } =
-    useNavQueryParams("route1");
+  const {
+    getQueryParams: getQueryParamsRoute1,
+    clearQueryParams,
+  } = useNavQueryParams("route1");
   const { getQueryParams: getQueryParamsRoute2 } = useNavQueryParams("route2");
   const { getQueryParams: getQueryParamsRoute3 } = useNavQueryParams("route3");
 

@@ -1,34 +1,3 @@
-// not used
-export type SimpleRouteParamPropertyType =
-  | string
-  | number
-  | bigint
-  | boolean
-  | null;
-
-// not used
-export type ComplexEncodingKeyToTypeMapping = {
-  array: Array<SimpleRouteParamPropertyType>;
-  record: Record<string, SimpleRouteParamPropertyType>;
-  date: Date;
-};
-
-export type ComplexEncodingKey = keyof ComplexEncodingKeyToTypeMapping;
-
-// not used
-// export type ComplexEncodingOptions<T extends ComplexEncodingKey> = Partial<{
-//   [key in T]: unknown;
-// }> & {
-//   array: { itemSeperator: string };
-//   record: {
-//     keyValueSeperator: string;
-//     objectStartSeparator: string;
-//     objectEndSeperator: string;
-//     entrySeperator: string;
-//   };
-//   date: { hyphenSeperator: string; colonSeperator: string };
-// };
-
 // Guide: { [routeKey]: { [paramKey]: [typeKey] } } <- input of package used for determine type conversion
 // ValidTypeKeys = keyof TypeKeyToTypeMapping(defined below)
 // PossibleTypeKeys = ValidTypeKeys + CustomTypeKeys(defined by user of package)
@@ -117,38 +86,6 @@ export type GetTypeKeyOfCustomValueType<
     : never;
 }[keyof TCustomTypeKeysDefinition];
 
-export type CleanQueryParamMapKeys<
-  TInputQueryParamMap extends {
-    [routeKey in string]?: { [paramKey in string]?: any };
-  },
-  TCustomTypeKeysDefinition extends TCustomType = {}
-> = {
-  [routeKey in keyof TInputQueryParamMap]: {
-    [paramKey in keyof TInputQueryParamMap[routeKey]]: GetTypeKeyOfValueType<
-      TInputQueryParamMap,
-      routeKey,
-      paramKey
-    > extends never
-      ? GetTypeKeyOfCustomValueType<
-          TInputQueryParamMap,
-          routeKey,
-          paramKey,
-          TCustomTypeKeysDefinition
-        > extends never
-        ? never
-        : TCustomTypeKeysDefinition[GetTypeKeyOfCustomValueType<
-            TInputQueryParamMap,
-            routeKey,
-            paramKey,
-            TCustomTypeKeysDefinition
-          >]
-      : TypeKeyToTypeMapping[GetTypeKeyOfValueType<
-          TInputQueryParamMap,
-          routeKey,
-          paramKey
-        >];
-  };
-};
 
 type TypeKeyMapping<
   TInputQueryParamMap,
@@ -185,36 +122,18 @@ export type InferTypeFromFromTypeKeys<
   };
 };
 
-type KeyType = string;
-
-type ValueType<TCustomKeysDefinition extends {}> =
-  | TCustomKeysDefinition[keyof TCustomKeysDefinition]
-  | TypeKeyToTypeMapping[keyof TypeKeyToTypeMapping];
-
-type TType<TCustomKeysDefinition extends TCustomType> = {
-  [routeKey in KeyType]?: {
-    [paramKey in KeyType]?: ValueType<TCustomKeysDefinition>;
-  };
-};
-
-type TDefault = { [routeKey in KeyType]?: { [paramKey in KeyType]?: any } };
-
 type TCustomType = { [customTypeKey: string]: any };
 
 export type RouteParamBaseTypeValue<
-  TInputMapping = TDefault,
+  TInputMapping,
   TInputRouteKey extends keyof TInputMapping = keyof TInputMapping,
   TCustomKeysDefinition extends TCustomType = {}
 > = {
-  typeKeyMapping: TDefault extends TInputMapping
-    ? {
-        [paramKey in string]?:
-          | keyof TCustomKeysDefinition
-          | ValidQueryParamPropertyTypeKeys;
-      }
-    : TypeKeyMapping<TInputMapping, TInputRouteKey, TCustomKeysDefinition>;
+  typeKeyMapping: 
+  TypeKeyMapping<TInputMapping, TInputRouteKey, TCustomKeysDefinition>;
   programmaticNavigate?: boolean;
 };
+
 
 export type InferRouteParamBaseTypeValue<
   TInputMapping,
@@ -222,7 +141,7 @@ export type InferRouteParamBaseTypeValue<
   TCustomKeysDefinition extends TCustomType = {}
 > = {
   typeKeyMapping: {
-    [paramKey in keyof TInputMapping[TInputRouteKey]]?:
+    [paramKey in keyof TInputMapping[TInputRouteKey]]:
       | keyof TCustomKeysDefinition
       | ValidQueryParamPropertyTypeKeys;
   };
@@ -230,10 +149,11 @@ export type InferRouteParamBaseTypeValue<
 };
 
 export type RouteParamBaseType<
-  TInputMapping extends {} = TDefault,
+  TInputMapping extends {},
+  TInputRouteKey extends keyof TInputMapping = keyof TInputMapping,
   TCustomKeysDefinition extends TCustomType = {}
 > = {
-  [routeKey in keyof TInputMapping]: RouteParamBaseTypeValue<
+  [routeKey in TInputRouteKey]: RouteParamBaseTypeValue<
     TInputMapping,
     routeKey,
     TCustomKeysDefinition
@@ -241,7 +161,7 @@ export type RouteParamBaseType<
 };
 
 export type InferRouteParamBaseType<
-  TInputMapping extends {},
+  TInputMapping,
   TCustomKeysDefinition extends TCustomType = {}
 > = {
   [routeKey in keyof TInputMapping]: InferRouteParamBaseTypeValue<
@@ -251,12 +171,6 @@ export type InferRouteParamBaseType<
   >;
 };
 
-export function activator<
-  TInputMapping extends TType<TCustomKeysDefinition> = TDefault,
-  TCustomKeysDefinition extends TCustomType = {}
->(routeMapping: RouteParamBaseType<TInputMapping, TCustomKeysDefinition>) {
-  return routeMapping;
-}
 
 export type RouteMappingGlobalOptions = {
   programmaticNavigate?: boolean;
@@ -293,9 +207,7 @@ export type QueryStringOptions<
 > = {
   full?: boolean;
   replaceAllParams?: boolean;
-  keyOrder?: TDefault extends TInputMapping
-    ? Record<string, number>
-    : Partial<Record<TInputParamKey, number>>;
+  keyOrder?: Partial<Record<TInputParamKey, number>>;
 };
 
 // options used when clearing the query params
@@ -308,8 +220,8 @@ export type ClearQueryParamsOptions<
     TCustomKeysDefinition
   >
 > = {
-  include?: TDefault extends TInputMapping ? string[] : TInputParamKey[];
-  exclude?: TDefault extends TInputMapping ? string[] : TInputParamKey[];
+  include?: TInputParamKey[];
+  exclude?: TInputParamKey[];
   behaviour?: "push" | "replace";
 };
 
@@ -319,9 +231,7 @@ export type ParsingErrorResultType<
   TInputRouteKey extends keyof TInputMapping,
   TCustomKeysDefinition extends {} = {}
 > = {
-  [key in TDefault extends TInputMapping
-    ? string
-    : FilterInvalidParamKeys<
+  [key in FilterInvalidParamKeys<
         TInputMapping[TInputRouteKey],
         TCustomKeysDefinition
       >]?: {
@@ -337,17 +247,13 @@ export type GetQueryParamsOptions<
   TInputRouteKey extends keyof TInputMapping,
   TCustomKeysDefinition extends {} = {}
 > = {
-  defaults?: TDefault extends TInputMapping
-    ? { [key in string]?: any }
-    : {
+  defaults?: {
         [key in FilterInvalidParamKeys<
           TInputMapping[TInputRouteKey],
           TCustomKeysDefinition
         >]?: TInputMapping[TInputRouteKey][key];
       };
-  useDefault?: TDefault extends TInputMapping
-    ? string[]
-    : FilterInvalidParamKeys<
+  useDefault?: FilterInvalidParamKeys<
         TInputMapping[TInputRouteKey],
         TCustomKeysDefinition
       >[];
@@ -359,15 +265,13 @@ export type GetQueryParamsResult<
   TInputRouteKey extends keyof TInputMapping,
   TCustomKeysDefinition extends {} = {}
 > = {
-  values: TDefault extends TInputMapping
-    ? { [key in string]?: any }
-    : Partial<
-        GetValueTypeOfKeyProperty<
-          TInputMapping,
-          TInputRouteKey,
-          TCustomKeysDefinition
-        >
-      >;
+  values: Partial<
+    GetValueTypeOfKeyProperty<
+      TInputMapping,
+      TInputRouteKey,
+      TCustomKeysDefinition
+    >
+  >;
   errors?: ParsingErrorResultType<
     TInputMapping,
     TInputRouteKey,

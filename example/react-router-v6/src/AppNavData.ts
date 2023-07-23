@@ -54,7 +54,10 @@ function isCustomRecordType(
   );
 }
 
-const { creator, activator } = createNavManager<{
+const { creator, 
+  // activator, 
+  untypedActivator 
+} = createNavManager<{
   myCustomRecord: Record<string, number | string | boolean>;
 }>({
   customTypeKeyMapping: {
@@ -85,7 +88,7 @@ const { creator, activator } = createNavManager<{
 });
 
 // activator function helps to determine the corresponding type key given the type of the route keys and their params keys
-const routeMapping = activator({
+const routeMapping = untypedActivator({
   route1: {
     typeKeyMapping: {
       numbers: "numberArray", // <-- param key : type key (mapping)
@@ -100,6 +103,7 @@ const routeMapping = activator({
       openModal: "boolean",
       defaultViewCount: "number",
     },
+    programmaticNavigate: false,
   },
   route3: {
     typeKeyMapping: {

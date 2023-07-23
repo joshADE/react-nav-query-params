@@ -17,15 +17,10 @@ import {
   ValidQueryParamPropertyTypeKeys,
   RouteMappingCustomSetting,
   RouteMappingConfiguration,
-  activator as untypedActivator,
   GetQueryParamsOptions,
   FilterInvalidParamKeys,
   TypeMapValue,
-  // CleanQueryParamMapKeys,
   TypeKeyToTypeMapping,
-  // InferTypeFromFromTypeKeys,
-  // InferRouteParamBaseType,
-  // RouteParamBaseTypeValue
 } from "./types";
 import { findTypeKeyOfString } from "./utils";
 
@@ -36,34 +31,57 @@ export default <
 >(
   customSettings: RouteMappingCustomSetting<TCustomKeysDefinition>
 ) => {
-  type KeyType = string;
+  type ValidKeys = keyof TCustomKeysDefinition | keyof TypeKeyToTypeMapping;
+
+  type TBaseType<U> = { [routeKey in keyof U]: { programmaticNavigate?: boolean; typeKeyMapping: { [paramKey in keyof any]: ValidKeys } } };
+
   type ValueType =
     | TCustomKeysDefinition[keyof TCustomKeysDefinition]
     | TypeKeyToTypeMapping[keyof TypeKeyToTypeMapping];
-  type TType = {
-    [routeKey in KeyType]?: { [paramKey in KeyType]?: ValueType };
+
+  type TType<U> = {
+    [routeKey in keyof U]?: {
+      [paramKey in keyof U[routeKey]]?: ValueType;
+    };
   };
-  type TDefault = { [routeKey in KeyType]?: { [paramKey in KeyType]?: any } };
 
-  // type InferKey<G extends TType, H extends keyof G, I extends keyof G[H]> = {
-  //   [routeKey in H]?: { [paramKey in I]?: any };
-  // };
+  type TTypeKeys<U extends TBaseType<U>> = {
+    [routeKey in keyof U]: {
+      [paramKey in keyof U[routeKey]["typeKeyMapping"]]: TDefaultValue<U[routeKey]["typeKeyMapping"][paramKey]>;
+    };
+  };
 
-  // type ExcludeString<T> = T | Exclude<T, string>;
-  // type ExcludeStringKeys<K1 extends string, K2 extends string, G extends TType<K1, K2>> = {
-  //   [routeKey in ExcludeString<keyof G>]?: {
-  //     [paramKey in ExcludeString<keyof G[routeKey]>]?: G[routeKey][paramKey];
-  //   };
-  // };
+  type TDefault<U extends TBaseType<U>> = {
+    [routeKey in keyof U]: {
+      programmaticNavigate?: boolean; typeKeyMapping:
+      {
+        [paramKey in keyof U[routeKey]["typeKeyMapping"]]: ValidKeys;
+      };
+    }
+  };
 
-  const activator = <T extends TType = TDefault>(
-    v: RouteParamBaseType<T, TCustomKeysDefinition>
+  type TDefaultValue<U> = U extends keyof TCustomKeysDefinition
+    ? TCustomKeysDefinition[U]
+    : U extends keyof TypeKeyToTypeMapping
+    ? TypeKeyToTypeMapping[U]
+    : never;
+
+  const activator = <
+    S extends TType<S> = any
+  >(
+    v: RouteParamBaseType<S, keyof S, TCustomKeysDefinition>
   ) => {
-    return untypedActivator<T, TCustomKeysDefinition>(v);
+    return v;
   };
 
-  const creator = <T extends TType>(
-    routeMapping: RouteParamBaseType<T, TCustomKeysDefinition>,
+  const untypedActivator = <S extends TDefault<any> = TDefault<any>, T extends TTypeKeys<any> = TTypeKeys<S>>(
+    v: S
+  ) => {
+    return v as unknown as RouteParamBaseType<T, keyof T, TCustomKeysDefinition>;
+  }
+
+  const creator = <T extends TType<T>>(
+    routeMapping: RouteParamBaseType<T, keyof T, TCustomKeysDefinition>,
     initialOptions: RouteMappingGlobalOptions = {},
     configurations: RouteMappingConfiguration = {}
   ) => {
@@ -306,28 +324,32 @@ export default <
             FilterInvalidParamKeys<T[TInputRouteKey], TCustomKeysDefinition>
           > = {}
         ) => {
-          const clearMap = {} as {
-            [key in FilterInvalidParamKeys<
+          let clearMap : {[key in FilterInvalidParamKeys<
               T[TInputRouteKey],
               TCustomKeysDefinition
-            >]?: boolean;
-          };
+            >]?: boolean} = {};
+
           let shouldFilter = false;
 
-          if (options?.include || options?.exclude) {
+          if (!options?.include && options?.exclude) {
             shouldFilter = true;
-            if (!options.include) {
-              Object.keys(routeMapping[key].typeKeyMapping).reduce(
-                (sum, k) => ({ ...sum, [k]: true }),
-                clearMap
-              );
-            } else {
-              (options.include as any[]).reduce(
-                (sum, k) => ({ ...sum, [k]: true }),
-                clearMap
-              );
-            }
-            (options?.exclude as any[] | undefined)?.reduce(
+            clearMap = Object.keys(routeMapping[key].typeKeyMapping).reduce(
+              (sum, k) => ({ ...sum, [k]: true }),
+              clearMap
+            );
+          }
+
+          if (options?.include) {
+            shouldFilter = true;
+            clearMap = (options?.include as any[] | undefined)?.reduce(
+              (sum, k) => ({ ...sum, [k]: true }),
+              clearMap
+            );
+          }
+
+          if (options?.exclude) {
+            shouldFilter = true;
+            clearMap = (options?.exclude as any[] | undefined)?.reduce(
               (sum, k) => ({ ...sum, [k]: false }),
               clearMap
             );
@@ -371,5 +393,6 @@ export default <
   return {
     activator,
     creator,
+    untypedActivator,
   };
 };
