@@ -26,7 +26,7 @@ const RouterPage = ({ type }: Props) => {
 
   useEffect(() => {
     console.log("route1:", getQueryParamsRoute1());
-    clearQueryParams({ behaviour: "replace" });
+    clearQueryParams({ behavior: "replace" });
     console.log("route2:", getQueryParamsRoute2());
 
     console.log("route3:", getQueryParamsRoute3());

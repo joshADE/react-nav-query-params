@@ -363,7 +363,7 @@ export default <
             }
           });
           const stringParams = params.toString();
-          if (options.behaviour === "push") {
+          if (options.behavior === "push") {
             adapter.pushLocation({ search: stringParams });
           } else {
             adapter.replaceLocation({ search: stringParams });

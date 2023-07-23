@@ -222,7 +222,7 @@ export type ClearQueryParamsOptions<
 > = {
   include?: TInputParamKey[];
   exclude?: TInputParamKey[];
-  behaviour?: "push" | "replace";
+  behavior?: "push" | "replace";
 };
 
 // result when there is an error decoding/parsing
