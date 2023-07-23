@@ -1,6 +1,6 @@
 # react-nav-query-params
 
-> A react package for easily managing query parameters across various routes throughout an application with typescript support, serialization/deserialization, and error handling. Note: This package is still in development, so there may be some bugs, major changes over time.
+> A react package for easily managing query parameters across various routes throughout an application with typescript support, serialization/deserialization, and error handling. Note: This package is still in development, so there may be some bugs and major changes over time.
 
 [![NPM](https://img.shields.io/npm/v/react-nav-query-params.svg)](https://www.npmjs.com/package/react-nav-query-params) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
@@ -12,35 +12,33 @@ npm install --save react-nav-query-params
 
 ## Guide
 
-Note: This package is meant for mainly TypeScript users as it works best in in TypeScript based applications to type URL query parameters and group them based on routes. JavaScript user can still benefit from using this package, but they will not get all the advantages that the package has to offer.
+Note: This package is meant for mainly TypeScript users as it works best in TypeScript-based applications to type URL query parameters and group them based on routes. JavaScript users can still benefit from using this package, but they will not get all the advantages that the package has to offer.
 
-### Setup
+### Defining the Routes and Param Keys
 
 #### TypeScript(TS) Users
 ```tsx
 
-// import the function from the package
+// Import the function from the package
 import { createNavManager } from "react-nav-query-params";
 
-// (Optional) Define strings or keys for your routes
-export type RoutesType = "route1" | "route2" | "route3"; 
-
-// (Suggested) Create a variable to store your route strings
+// (Suggested) Create a variable to store your route key strings
 export const Routes = {
   Route1: "route1",
   Route2: "route2",
   Route3: "route3",
-} satisfies { [key in string]?: RoutesType };
+};
 
-// define the types of the query params that are passed or recieved in application
-// keys are strings correspond to different pages or components (route key)
-// values correspond to the name and type of the query params associated with route key (ignore for JavaScript users)
+// (Optional) Define the types of query params that are used in the application grouped by route keys used above
+// keys are strings corresponding to different pages or components (route key)
+// values correspond to the name and type of the query params associated with the route key (ignore if not using TypeScript (JavaScript users))
 
+type SampleStringUnion = "one" | "two" | "three";
 
 export type QueryParamTypeMapping  { // <-- * use type
     [Routes.Route1]: {
-        param1: {[type in RoutesType]?: boolean};
-        param2: RoutesType;
+        param1: {[sample in SampleStringUnion]?: boolean};
+        param2: SampleStringUnion;
         param3: number[];
         param4: string;
     },
@@ -60,13 +58,15 @@ export type QueryParamTypeMapping  { // <-- * use type
 // * simple types (SimpleType) => string | number | boolean | bigint
 // * complex types => Record<string, SimpleType> | Date | Array<SimpleType>
 // * encoding/decoding is done based on type key (a key associated with a specific type)
+// The supported type keys are listed  below under the section 'List of Type Keys & Types'
 
-const { creator, activator } = createNavManager({
+const { creator, activator, untypedActivator } = createNavManager({
   customTypeKeyMapping: {}
 });
 
-// use the activator function returned to help enforce typescript's type checking / autocompletion
+// use the activator function returned to help enforce typescript's type checking/auto-completion
 // activator function helps to determine the corresponding type key used for encoding/decoding given the type of each params keys
+// (could also replace activator with untypedActivator if you don't want to specify a type as the Generic argument, as seen in the JS example below)
 
 const routeMapping = activator<QueryParamTypeMapping>({ 
   [Routes.Route1]: {
@@ -94,8 +94,9 @@ const routeMapping = activator<QueryParamTypeMapping>({
 
 
 // call creator function with the routeMapping
-// and you will get back a context to wrap around application(optional)
-// as well as a hook to 'look up' functions that help manage each grouping of query params based on the route string provided
+// and you will get back a context to wrap around the application
+// as well as a hook to manage the query params given a specific route key
+// (Refer to the 'Usage' section below)
 
 export const { NavQueryContext, useNavQueryParams } = creator(
   routeMapping
@@ -107,7 +108,7 @@ export const { NavQueryContext, useNavQueryParams } = creator(
 #### JavaScript(JS) Users
 ```jsx
 
-// import the function from the package
+// Import the function from the package
 import { createNavManager } from "react-nav-query-params";
 
 // (Suggested) Create a variable to store your route strings
@@ -122,13 +123,14 @@ export const Routes = {
 // * simple types (SimpleType) => string | number | boolean | bigint
 // * complex types => Record<string, SimpleType> | Date | Array<SimpleType>
 // * encoding/decoding is done based on type key (a key associated with a specific type)
+// The supported type keys are listed  below under the section 'List of Type Keys & Types'
 
-const { creator, activator } = createNavManager({
+const { creator, untypedActivator } = createNavManager({
   customTypeKeyMapping: {}
 });
 
 
-const routeMapping = activator({ 
+const routeMapping = untypedActivator({ 
   [Routes.Route1]: {
     typeKeyMapping: {
       param1: "booleanRecord", // <-- param key : type key (mapping)
@@ -154,8 +156,9 @@ const routeMapping = activator({
 
 
 // call creator function with the routeMapping
-// and you will get back a context to wrap around application(optional)
-// as well as a hook to 'look up' functions that help manage each grouping of query params based on the route key provided
+// and you will get back a context to wrap around the application
+// as well as a hook to manage the query params given a specific route key
+// (Refer to the 'Usage' section below)
 
 export const { NavQueryContext, useNavQueryParams } = creator(
   routeMapping
@@ -165,11 +168,20 @@ export const { NavQueryContext, useNavQueryParams } = creator(
 
 
 
-### Usage(TS/JS Users)
+### Setup(Both TS/JS Users)
 ```tsx
 
-// (example using react router v6, but could be adapted for other routing solutions)
-const router = createBrowserRouter([ // from react router v6
+// (example below uses react-router v6, and will look slightly different for other routing solutions)
+// (This example is much more complicated because of how react-router v6 defines routes
+// and how it prevents access to the location and history object from the components that are not used inside the main Browser router object) 
+// (For other routing solutions, such as Next.js router the setup may be easier)
+// The main purpose of this step is to provide the package access to the location and history objects
+// used by your routing solution so that the package can read and update the query params
+
+
+// If you are using react-router v6, add a component 'RouteBasePage' to the root of your router with the path '/'
+// that uses the 'NavQueryContext' given by this package (look below for the implementation of RouteBasePage)
+const router = createBrowserRouter([ // from react-router v6
   {
       path: "/",
       element: <RouteBasePage />,
@@ -189,22 +201,24 @@ const router = createBrowserRouter([ // from react router v6
 function App(){
   return (
     <div className="App">
-        <RouterProvider router={router} />  {/* from react router v6 */}
+        <RouterProvider router={router} />  {/* from react-router v6 */}
     </div>
   );
 }
 
 
 
-// In a child component of the app component need to create an adapter object that tells this package how to manage history and location
-// need access to the navigate / location data from react router v6 package
+// In a child component of the app component need to create an adapter object that tells this package how to manage history and location objects.
+// need access to the history.push/replace and location data from the react-router v6
 
 import { Adapter } from "react-nav-query-params"; //<-- TS users only
 import { useLocation, useNavigate, Outlet } from "react-router-dom"; //<-- react router v6 users only
 
 function RouteBasePage(){
-  // the following is specific to react-router-v6 and might look different for each routing solution, 
-  // but the adapter created needs to be provided in a similar manner into the NavQueryContext.Provider or else the useNavQueryParams hook will not work
+  // The following is specific to react-router v6 and might look different for each routing solution, 
+  // but the adapter created needs to be provided in a similar manner in the NavQueryContext.Provider
+  // or else the useNavQueryParams hook will not work
+
   const location = useLocation(); // <-- for react-router, can only be called in a child component of RouterProvider
   const navigate = useNavigate(); // <-- for react-router, can only be called in a child component of RouterProvider
 
@@ -228,35 +242,32 @@ function RouteBasePage(){
         adapter: adapter,
       }}
     >
-      <div>
-        <Outlet />
-      </div>
+      <Outlet />
     </NavQueryContext.Provider>
   );
 }
 
+```
+
+### Usage(Both TS/JS Users)
+```tsx
+
 // A component where you read the query params
 function ReadingParams(){
     const { getQueryParams: getQueryParamsRoute1, clearQueryParams: clearQueryParamsRoute1 } = useNavQueryParams(Routes.Route1);
-    const { getQueryParams: getQueryParamsRoute2, clearQueryParams: clearQueryParamsRoute2 } = useNavQueryParams(Routes.Route2);
-    const { getQueryParams: getQueryParamsRoute3, clearQueryParams: clearQueryParamsRoute3 } = useNavQueryParams(Routes.Route3);
 
-    // all functions returned by the hook are memoized using useCallback,
-    // getQueryParams has a dependency on the query string used in the url
+    // All functions returned by the hook are memoized using useCallback,
+    // getQueryParams has a dependency on the query string used in the URL
     // so if the query string changes, all effects with the function as a
     // dependency will rerun
 
 
     useEffect(() => {
+
         console.log("route1:", getQueryParamsRoute1()); // logs out route1: { values, errors } -> values.param1, and errors.param1, etc...
         clearQueryParamsRoute1(); // clears all query params from url associated with route1
-        console.log("route2:", getQueryParamsRoute2());
-        clearQueryParamsRoute2();
-        console.log("route3:", getQueryParamsRoute3());
-        clearQueryParamsRoute3();
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    }, [getQueryParamsRoute1, clearQueryParamsRoute1])
 
   return (
     <div>
@@ -269,10 +280,10 @@ function ReadingParams(){
 function NavigatingAndSettingParams() {
   const { getQueryString  } = useNavQueryParams(Routes.Route1);
 
-  const queryString = getQueryString({ param2: "route3", param1: { "route3": true }, param3: [10, 30] }, 
+  const queryString = getQueryString({ param2: "three", param1: { "three": true }, param3: [10, 30] }, 
   { // (optional argument)
-    replaceAllParams: true, // replace the current query params, when getting query string
-    full: true, // include the '?' in query string
+    replaceAllParams: true, // replace the current query params, when getting the query string
+    full: true, // include the '?' in the query string
   });
 
 
@@ -331,12 +342,12 @@ const { creator, activator } = createNavManager({
     numericRangeCustomType: {
       category: "custom", // <- always use "custom"
       sample: [1, 2] as [number, number], // <- sample value of the type
-      encodingMap: { // <- specify a way to encode/decode type associated with key
+      encodingMap: { // <- specify a way to encode/decode type associated with the custom type key
         encode: (value) => {
           return JSON.stringify(value);
         },
         decode: (value) => { // <- can throw an Error inside the decode function saying the string value cannot be decoded
-          const decoded = JSON.parse("["+value+"]"); 
+          const decoded = JSON.parse(value); 
           if (!isNumericRange(decoded)) throw new Error("Error while decoding");
           return decoded;
         },
@@ -348,7 +359,7 @@ const { creator, activator } = createNavManager({
   }
 });
 
-creator() / activator() //<-- now has access to custom type/type key
+creator() / activator() / untypedActivator() //<-- now have access to custom type/type key
 
 ```
 
@@ -367,12 +378,12 @@ const { creator, activator } = createNavManager({
     numericRangeCustomType: {
       category: "custom", // <- always use "custom"
       sample: [1, 2], // <- sample value of the type
-      encodingMap: { // <- specify a way to encode/decode type associated with key
+      encodingMap: { // <- specify a way to encode/decode type associated with the custom type key
         encode: (value) => {
           return JSON.stringify(value);
         },
         decode: (value) => { // <- can throw an Error inside the decode function saying the string value cannot be decoded
-          const decoded = JSON.parse("["+value+"]"); 
+          const decoded = JSON.parse(value); 
           if (!isNumericRange(decoded)) throw new Error("Error while decoding");
           return decoded;
         },
@@ -384,8 +395,40 @@ const { creator, activator } = createNavManager({
   }
 });
 
-creator() / activator() //<-- now has access to custom type/type key
+creator() / activator() / untypedActivator() //<-- now have access to custom type/type key
 
 ```
 
+### Functions returned by useNavQueryParams(routeKey)
 
+- getQueryString(newParams, options?)
+  - Args
+    - newParams: Object containing the new values for each param key of the associated route key
+      - e.g. { param3: [12] } <- param3 will be set to param3=12 in the query string
+    - options: Object containing one of the following options
+      - full: (optional boolean) Specify whether to include the '?' in the query string
+      - replaceAllParams: (optional boolean) Specify whether to replace all current query params
+      - keyOrder: (optional object) Specify the order in which the query params associated with the route key will appear in the query string
+        - e.g. { param1: 4, param2: 2 } <- param2 will appear before param1 in the string as it has a lower number
+   - Returns: the query string
+- getQueryParams(options?)
+  - Args
+    - options: Object containing one of the following options
+      - useDefaults: (optional array) An array containing a list of param keys to use default values
+        - e.g. ["param3"] <- if param3 has a default value, it will be used when an error is thrown while decoding 
+      - defaults: (optional object) Specify the default values that are returned if it fails to decode a specific param key value
+        - e.g. { param3: [0] } <- param3 will default to '[0]' if it attempted to decode an invalid value and threw an error
+   - Returns: Object containing the below key/value pairs
+      - values: (object) Contains the values of the param keys that were successfully decoded 
+        - e.g. { param3: [10, 30] } <- param3 will be a array of number | undefined
+      - errors: (object) Contains error data about the param keys that failed to be decoded
+        - e.g.  { param3: { expectedType: "numberArray", actualType: "number", errorStringValue: "15" } }
+- clearQueryParams(options?)
+  - Args
+    - options: Object containing one of the following options
+      - behavior: (optional string) Specify either "replace" to replace the entry in the browser history, or "push" to add to the history 
+      - include: (optional array) Specify the param keys to include only when clearing the query params
+        - e.g. ["param1", "param3"] <- param1/param3 only will be removed from the URL
+      - exclude: (optional array) Specify the param keys to exclude when clearing the query params (takes precedence over include array, if include is not provided, it will clear the other params)
+        - e.g. ["param1", "param3"] <- param2/param4 only will be removed from the URL and param1/param3 will be left
+   - Returns: void
