@@ -8,6 +8,21 @@ export type EncodingMapValue<ParamType> = {
   defaultValue?: ParamType;
 };
 
+export type SimpleRouteParamPropertyType =
+  | string
+  | number
+  | bigint
+  | boolean
+  | null;
+
+export type ComplexEncodingKeyToTypeMapping = {
+  array: Array<SimpleRouteParamPropertyType>;
+  record: Record<string, SimpleRouteParamPropertyType>;
+  date: Date;
+};
+
+export type ComplexEncodingKey = keyof ComplexEncodingKeyToTypeMapping;
+
 export type TypeMapValue<ParamType> = {
   deafultValue?: ParamType;
   encodingMap: EncodingMapValue<ParamType>;
@@ -51,6 +66,18 @@ export type FilterInvalidParamKeys<
     ? paramKey
     : never;
 }[keyof TInputQueryParamToTypeMapping];
+
+// input type for getting query string params function
+export type QueryStringParams<
+  TInputQueryParamMap,
+  TInputRouteKey extends keyof TInputQueryParamMap,
+  TCustomTypeKeysDefinition extends TCustomType = {}
+> = {
+  [key in FilterInvalidParamKeys<
+    TInputQueryParamMap[TInputRouteKey],
+    TCustomTypeKeysDefinition
+  >]: TInputQueryParamMap[TInputRouteKey][key] | null | undefined;
+};
 
 export type GetValueTypeOfKeyProperty<
   TInputQueryParamMap,

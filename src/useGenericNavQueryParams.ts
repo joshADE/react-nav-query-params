@@ -21,6 +21,7 @@ import {
   FilterInvalidParamKeys,
   TypeMapValue,
   TypeKeyToTypeMapping,
+  QueryStringParams,
 } from "./types";
 import { findTypeKeyOfString } from "./utils";
 
@@ -173,9 +174,7 @@ export default <
 
       const getQueryString = useCallback(
         (
-          newParams: Partial<
-            GetValueTypeOfKeyProperty<T, TInputRouteKey, TCustomKeysDefinition>
-          >,
+          newParams: QueryStringParams<T, TInputRouteKey, TCustomKeysDefinition>,
           options: QueryStringOptions<
             T,
             TInputRouteKey,
@@ -193,10 +192,15 @@ export default <
 
           const keyOrders =
             options?.keyOrder ?? ({} as Record<InputParamKey, number>);
-          const paramsToEncode = Object.entries(newParams) as [
+          let paramsToEncode = Object.entries(newParams) as [
             InputParamKey,
             unknown
           ][];
+
+          // removing the new params with undefined type
+          paramsToEncode = paramsToEncode.filter(([_, value]) => {
+            return value !== undefined;
+          });
 
           paramsToEncode.sort(([keyA], [keyB]) => {
             const orderA = (keyOrders as any)[keyA] ?? 0;
@@ -218,10 +222,15 @@ export default <
             const typeKeyProps = possibleTypeMap[typeKey] as TypeMapValue<any>;
             if (typeKeyProps !== undefined) {
               const typedValue = value as any;
-              params.set(
-                paramKey.toString(),
-                typeKeyProps.encodingMap.encode(typedValue)
-              );
+              // removing new params with null value
+              if (value === null){
+                params.delete(paramKey.toString());
+              }else {
+                params.set(
+                  paramKey.toString(),
+                  typeKeyProps.encodingMap.encode(typedValue)
+                );
+              }
             }
           });
           result += params.toString();

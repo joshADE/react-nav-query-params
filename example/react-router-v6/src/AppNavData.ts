@@ -25,7 +25,7 @@ export type RouteMapping = {
     display: { [type in PageType]?: boolean }; // <-- param key
     focus: PageType;
     numbers: number[];
-    salutation: string;
+    names: string[],
   };
   route2: {
     openModal: boolean;
@@ -55,8 +55,8 @@ function isCustomRecordType(
 }
 
 const { creator, 
-  // activator, 
-  untypedActivator 
+  activator, 
+  // untypedActivator 
 } = createNavManager<{
   myCustomRecord: Record<string, number | string | boolean>;
 }>({
@@ -88,13 +88,13 @@ const { creator,
 });
 
 // activator function helps to determine the corresponding type key given the type of the route keys and their params keys
-const routeMapping = untypedActivator({
+const routeMapping = activator<RouteMapping>({
   route1: {
     typeKeyMapping: {
       numbers: "numberArray", // <-- param key : type key (mapping)
       focus: "string",
-      salutation: "string",
       display: "myCustomRecord",
+      names: "stringArray",
     },
     programmaticNavigate: true, // only read the query params for this route when naviating programmatically if set to true
   },

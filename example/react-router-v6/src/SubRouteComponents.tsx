@@ -28,17 +28,24 @@ const Route1Component = () => {
   ]);
   const [newNumber, setNewNumber] = useState<string>("0");
 
+  const [names, setNames] = useState<RouteMapping["route1"]["names"]>([
+    "Fred",
+  ]);
+  const [newName, setNewName] = useState<string>("John");
+
   const queryString = useMemo(() => {
     return getQueryStringRoute1(
       {
         focus,
         display,
         numbers,
+        names,
       },
       { replaceAllParams: true }
     );
-  }, [focus, getQueryStringRoute1, display, numbers]);
+  }, [focus, getQueryStringRoute1, display, numbers, names]);
 
+  console.log("Route1Component", focus, display, numbers, names);
   return (
     <div className={styles2["section"]}>
       <h5 className={styles2["section-title"]}>{title}</h5>
@@ -82,7 +89,7 @@ const Route1Component = () => {
                 <input
                   id={id}
                   type="checkbox"
-                  name="focus"
+                  name="display"
                   checked={display[other] ?? false}
                   onChange={() =>
                     setDisplay((d) => ({ ...d, [other]: !d[other] }))
@@ -106,7 +113,7 @@ const Route1Component = () => {
             <input
               className={styles2["input"]}
               type="text"
-              name="focus"
+              name="numbers"
               value={newNumber}
               onChange={(e) => {
                 const numberValue = Number(e.target.value);
@@ -141,6 +148,61 @@ const Route1Component = () => {
               type="button"
               onClick={() => {
                 setNumbers([]);
+              }}
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+        <div className={styles2["param-container"]}>
+          <h6 className={styles2["param-title"]}>
+            Names:{" "}
+            <span className={styles2["param-type"]}>&lt;{`string[]`}&gt;</span>
+          </h6>
+          <div className={styles2["numbers"]}>
+            {names.map((n, i) => {
+              return <span key={i}>{i > 0 ? `, ${n}` : n}</span>;
+            })}
+          </div>
+          <div className={styles2["numbers-controls"]}>
+            <input
+              className={styles2["input"]}
+              type="text"
+              name="names"
+              value={newName}
+              onChange={(e) => {
+                const newName = e.target.value;
+                setNewName(newName);
+              }}
+            />
+            <button
+              className={styles2["button"]}
+              type="button"
+              onClick={() => {
+                if(newName){
+                  setNames((prev) => prev.concat(newName));
+                  setNewName("");
+                }
+              }}
+            >
+              Push
+            </button>
+            <button
+              className={styles2["button"]}
+              type="button"
+              onClick={() => {
+                setNames((prev) =>
+                  prev.filter((_, i) => i !== prev.length - 1)
+                );
+              }}
+            >
+              Pop
+            </button>
+            <button
+              className={styles2["button"]}
+              type="button"
+              onClick={() => {
+                setNames([]);
               }}
             >
               Clear

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import {
   PageType,
   PageRoutingData,
@@ -17,9 +17,9 @@ interface Props {
 }
 
 const RouterPage = ({ type }: Props) => {
-  const { getQueryParams: getQueryParamsRoute1 } = useNavQueryParams("route1");
-  const { getQueryParams: getQueryParamsRoute2 } = useNavQueryParams("route2");
-  const { getQueryParams: getQueryParamsRoute3 } = useNavQueryParams("route3");
+  const { getQueryParams: getQueryParamsRoute1, clearQueryParams: clearQueryParamsRoute1 } = useNavQueryParams("route1");
+  const { getQueryParams: getQueryParamsRoute2, clearQueryParams: clearQueryParamsRoute2 } = useNavQueryParams("route2");
+  const { getQueryParams: getQueryParamsRoute3, clearQueryParams: clearQueryParamsRoute3 } = useNavQueryParams("route3");
 
   const data = useMemo(() => {
     const route1 = ("route1: " + JSON.stringify(getQueryParamsRoute1(), null, 2));
@@ -31,6 +31,12 @@ const RouterPage = ({ type }: Props) => {
   
     return `${route1}\n\n${route2}\n\n${route3}`;
   }, [getQueryParamsRoute1, getQueryParamsRoute2, getQueryParamsRoute3]);
+
+    useEffect(() => {
+      clearQueryParamsRoute1();
+      clearQueryParamsRoute2();
+      clearQueryParamsRoute3();
+  }, [clearQueryParamsRoute1, clearQueryParamsRoute2, clearQueryParamsRoute3]);
 
   const getSubRouteComponenet = useCallback((t: PageType) => {
     switch (t) {
