@@ -1,4 +1,4 @@
-export { default as createNavManager } from "./useGenericNavQueryParams";
+export { default as createNavManager } from "./useNavQueryParams";
 
 export {
   GetValueTypeOfKeyProperty,

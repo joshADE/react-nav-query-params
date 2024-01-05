@@ -264,7 +264,6 @@ export default <
             );
           }
 
-          // const routeKey = key as string;
           let result: Partial<
             GetValueTypeOfKeyProperty<T, TInputRouteKey, TCustomKeysDefinition>
           > = {};
@@ -365,7 +364,18 @@ export default <
           }
 
           const params = new URLSearchParams(query);
-          Object.keys(routeMapping[key].typeKeyMapping).forEach((key) => {
+          
+          const clearingParamKeys = Object.keys(!shouldFilter ? routeMapping[key].typeKeyMapping: clearMap);
+          const currentParamKeys = Array.from(Object.keys(params));
+
+          var setUnion = currentParamKeys.filter(x => clearingParamKeys.includes(x));
+
+          if (setUnion.length === 0) {
+            // no params to clear
+            return;
+          }
+
+          clearingParamKeys.forEach((key) => {
             const typedParamKey = key as InputParamKey;
             if (!shouldFilter || (shouldFilter && clearMap[typedParamKey])) {
               params.delete(key);
@@ -380,6 +390,7 @@ export default <
         },
         [query]
       );
+
 
       const getRouteMapping = useCallback(() => {
         return routeMapping[key];

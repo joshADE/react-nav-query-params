@@ -45,7 +45,7 @@ const Route1Component = () => {
     );
   }, [focus, getQueryStringRoute1, display, numbers, names]);
 
-  console.log("Route1Component", focus, display, numbers, names);
+  // console.log("Route1Component", focus, display, numbers, names);
   return (
     <div className={styles2["section"]}>
       <h5 className={styles2["section-title"]}>{title}</h5>
