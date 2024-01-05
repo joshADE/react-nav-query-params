@@ -1,7 +1,7 @@
 import {
   ComplexEncodingKey,
   ComplexEncodingKeyToTypeMapping,
-  EncodingMapValue,
+  EncodingMapComplexValue,
   TypeKeyToTypeMapping,
   TypeMapValue,
   ValidQueryParamPropertyTypeKeys,
@@ -12,7 +12,6 @@ import {
   matchArrayType,
   matchArrayTypeWithArrayCheck,
   matchRecordType,
-  simpleTypeConvert,
   simpleTypeConvertWithError,
 } from "./utils";
 
@@ -22,7 +21,7 @@ export const validTypeMap: {
   >;
 } = {
   string: {
-    deafultValue: "",
+    defaultValue: "",
     encodingMap: {
       encode: (v) => {
         return v;
@@ -32,13 +31,12 @@ export const validTypeMap: {
       },
     },
     category: "simple",
-    sample: "test",
     match: (value) => {
       return typeof value === "string";
     },
   },
   number: {
-    deafultValue: -1,
+    defaultValue: -1,
     encodingMap: {
       encode: (v) => {
         return v.toString();
@@ -48,13 +46,12 @@ export const validTypeMap: {
       },
     },
     category: "simple",
-    sample: -1,
     match: (value) => {
       return typeof value === "number";
     },
   },
   bigint: {
-    deafultValue: BigInt(9007199254740991),
+    defaultValue: BigInt(9007199254740991),
     encodingMap: {
       encode: (v) => {
         return v.toString();
@@ -67,13 +64,12 @@ export const validTypeMap: {
       },
     },
     category: "simple",
-    sample: BigInt(9007199254740991),
     match: (value) => {
       return typeof value === "bigint";
     },
   },
   boolean: {
-    deafultValue: false,
+    defaultValue: false,
     encodingMap: {
       encode: (v) => {
         return v.toString();
@@ -83,13 +79,12 @@ export const validTypeMap: {
       },
     },
     category: "simple",
-    sample: false,
     match: (value) => {
       return typeof value === "boolean";
     },
   },
   stringArray: {
-    deafultValue: ["sample"],
+    defaultValue: ["sample"],
     encodingMap: {
       encode: (v) => {
         return EncodingMap.array.encode(v);
@@ -103,13 +98,12 @@ export const validTypeMap: {
       },
     },
     category: "complex",
-    sample: ["sample"],
     match: (value) => {
       return matchArrayTypeWithArrayCheck(value, "string");
     },
   },
   numberArray: {
-    deafultValue: [-1],
+    defaultValue: [-1],
     encodingMap: {
       encode: (v) => {
         return EncodingMap.array.encode(v);
@@ -123,13 +117,12 @@ export const validTypeMap: {
       },
     },
     category: "complex",
-    sample: [-1],
     match: (value) => {
       return matchArrayTypeWithArrayCheck(value, "number");
     },
   },
   bigintArray: {
-    deafultValue: [BigInt(9007199254740991)],
+    defaultValue: [BigInt(9007199254740991)],
     encodingMap: {
       encode: (v) => {
         return EncodingMap.array.encode(v);
@@ -146,13 +139,12 @@ export const validTypeMap: {
       },
     },
     category: "complex",
-    sample: [BigInt(9007199254740991)],
     match: (value) => {
       return matchArrayTypeWithArrayCheck(value, "bigint");
     },
   },
   booleanArray: {
-    deafultValue: [false],
+    defaultValue: [false],
     encodingMap: {
       encode: (v) => {
         return EncodingMap.array.encode(v);
@@ -166,13 +158,12 @@ export const validTypeMap: {
       },
     },
     category: "complex",
-    sample: [false],
     match: (value) => {
       return matchArrayTypeWithArrayCheck(value, "boolean");
     },
   },
   stringRecord: {
-    deafultValue: { sample: "sample" },
+    defaultValue: { sample: "sample" },
     encodingMap: {
       encode: (v) => {
         return EncodingMap.record.encode(v);
@@ -189,13 +180,12 @@ export const validTypeMap: {
       },
     },
     category: "complex",
-    sample: { sample: "sample" },
     match: (value) => {
       return matchRecordType(value, "string");
     },
   },
   numberRecord: {
-    deafultValue: { sample: -1 },
+    defaultValue: { sample: -1 },
     encodingMap: {
       encode: (v) => {
         return EncodingMap.record.encode(v);
@@ -212,13 +202,12 @@ export const validTypeMap: {
       },
     },
     category: "complex",
-    sample: { sample: -1 },
     match: (value) => {
       return matchRecordType(value, "number");
     },
   },
   bigintRecord: {
-    deafultValue: { sample: BigInt(-1) },
+    defaultValue: { sample: BigInt(-1) },
     encodingMap: {
       encode: (v) => {
         return EncodingMap.record.encode(v);
@@ -235,13 +224,12 @@ export const validTypeMap: {
       },
     },
     category: "complex",
-    sample: { sample: BigInt(-1) },
     match: (value) => {
       return matchRecordType(value, "bigint");
     },
   },
   booleanRecord: {
-    deafultValue: { sample: false },
+    defaultValue: { sample: false },
     encodingMap: {
       encode: (v) => {
         return EncodingMap.record.encode(v);
@@ -258,13 +246,12 @@ export const validTypeMap: {
       },
     },
     category: "complex",
-    sample: { sample: false },
     match: (value) => {
       return matchRecordType(value, "boolean");
     },
   },
   date: {
-    deafultValue: new Date(),
+    defaultValue: new Date(),
     encodingMap: {
       encode: (v) => {
         return EncodingMap.date.encode(v);
@@ -278,7 +265,6 @@ export const validTypeMap: {
       },
     },
     category: "complex",
-    sample: new Date(),
     match: (value) => {
       return isIsoDate(String(value));
     },
@@ -286,7 +272,7 @@ export const validTypeMap: {
 };
 
 export const EncodingMap: {
-  [key in ComplexEncodingKey]: EncodingMapValue<ComplexEncodingKeyToTypeMapping[key]>
+  [key in ComplexEncodingKey]: EncodingMapComplexValue<ComplexEncodingKeyToTypeMapping[key]>
 } = {
   array: {
     encode: (value) => {
@@ -295,7 +281,7 @@ export const EncodingMap: {
     decode: (value, sampleSimpleValue) => {
       const splitValue = value
         .split(",");
-        return splitValue.map((v) => simpleTypeConvert(v, sampleSimpleValue));
+        return splitValue.map((v) => simpleTypeConvertWithError(v, sampleSimpleValue));
     }
   },
   record: {
@@ -334,7 +320,7 @@ export const EncodingMap: {
           if (len >= 2) {
             return [
               splitEntry[0],
-              simpleTypeConvert(splitEntry[1], sampleSimpleValue),
+              simpleTypeConvertWithError(splitEntry[1], sampleSimpleValue),
             ];
           } else {
             return [splitEntry[0], null];

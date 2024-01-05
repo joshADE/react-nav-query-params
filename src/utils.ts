@@ -135,8 +135,9 @@ export function findTypeKey(
     .sort(([, valueA], [, valueB]) => {
       return (valueA.matchPriority ?? 0) - (valueB.matchPriority ?? 0);
     })
+    .filter(([, value]) => value.match !== undefined)
     .find(([, value]) => {
-      return value.match(input);
+      return value.match!(input);
     });
 
   if (foundSimpleMatch) {
@@ -152,8 +153,9 @@ export function findTypeKey(
     .sort(([, valueA], [, valueB]) => {
       return (valueA.matchPriority ?? 0) - (valueB.matchPriority ?? 0);
     })
+    .filter(([, value]) => value.match !== undefined)
     .find(([, value]) => {
-      return value.match(input);
+      return value.match!(input);
     });
 
   if (foundComplexMatch) {
@@ -169,8 +171,9 @@ export function findTypeKey(
     .sort(([, valueA], [, valueB]) => {
       return (valueA.matchPriority ?? 0) - (valueB.matchPriority ?? 0);
     })
+    .filter(([, value]) => value.match !== undefined)
     .find(([, value]) => {
-      return value.match(input);
+      return value.match!(input);
     });
 
   if (foundCustomMatch) {
@@ -183,13 +186,11 @@ export function findTypeKey(
 function decodeAndMatch(
   input: string,
   decodeFunction: (
-    value: string,
-    sampleSimpleValue: unknown
-  ) => unknown,
+    value: string) => unknown,
   matchFunction: (value: unknown) => boolean
 ) {
   try {
-    const decoded = decodeFunction(input, null);
+    const decoded = decodeFunction(input);
     return matchFunction(decoded);
   } catch (e) {
     return false;
@@ -212,8 +213,9 @@ export function findTypeKeyOfString(
     .sort(([, valueA], [, valueB]) => {
       return (valueA.matchPriority ?? 0) - (valueB.matchPriority ?? 0);
     })
+    .filter(([, value]) => value.match !== undefined)
     .find(([, value]) => {
-      return decodeAndMatch(input, value.encodingMap.decode, value.match);
+      return decodeAndMatch(input, value.encodingMap.decode, value.match!);
     });
 
   if (foundSimpleMatch) {
@@ -229,8 +231,9 @@ export function findTypeKeyOfString(
     .sort(([, valueA], [, valueB]) => {
       return (valueA.matchPriority ?? 0) - (valueB.matchPriority ?? 0);
     })
+    .filter(([, value]) => value.match !== undefined)
     .find(([, value]) => {
-      return decodeAndMatch(input, value.encodingMap.decode, value.match);
+      return decodeAndMatch(input, value.encodingMap.decode, value.match!);
     });
 
   if (foundComplexMatch) {
@@ -246,8 +249,9 @@ export function findTypeKeyOfString(
     .sort(([, valueA], [, valueB]) => {
       return (valueA.matchPriority ?? 0) - (valueB.matchPriority ?? 0);
     })
+    .filter(([, value]) => value.match !== undefined)
     .find(([, value]) => {
-      return decodeAndMatch(input, value.encodingMap.decode, value.match);
+      return decodeAndMatch(input, value.encodingMap.decode, value.match!);
     });
 
   if (foundCustomMatch) {

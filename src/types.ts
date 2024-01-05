@@ -4,6 +4,12 @@
 
 export type EncodingMapValue<ParamType> = {
   encode: (value: ParamType) => string;
+  decode: (value: string) => ParamType;
+  defaultValue?: ParamType;
+};
+
+export type EncodingMapComplexValue<ParamType> = {
+  encode: (value: ParamType) => string;
   decode: (value: string, sampleSimpleValue: unknown) => ParamType;
   defaultValue?: ParamType;
 };
@@ -24,11 +30,10 @@ export type ComplexEncodingKeyToTypeMapping = {
 export type ComplexEncodingKey = keyof ComplexEncodingKeyToTypeMapping;
 
 export type TypeMapValue<ParamType> = {
-  deafultValue?: ParamType;
+  defaultValue?: ParamType;
   encodingMap: EncodingMapValue<ParamType>;
   category: "simple" | "complex" | "custom";
-  sample: ParamType;
-  match: (value: unknown) => boolean;
+  match?: (value: unknown) => boolean;
   matchPriority?: number;
 };
 
@@ -76,7 +81,7 @@ export type QueryStringParams<
   [key in FilterInvalidParamKeys<
     TInputQueryParamMap[TInputRouteKey],
     TCustomTypeKeysDefinition
-  >]: TInputQueryParamMap[TInputRouteKey][key] | null | undefined;
+  >]?: TInputQueryParamMap[TInputRouteKey][key] | null | undefined;
 };
 
 export type GetValueTypeOfKeyProperty<

@@ -109,7 +109,7 @@ export default <
                   value.encodingMap.encode = encode;
                 }
                 if (defaultValue !== null && defaultValue !== undefined) {
-                  value.deafultValue = defaultValue;
+                  value.defaultValue = defaultValue;
                 }
               }
               return [typeKey, value];
@@ -288,8 +288,7 @@ export default <
                 if (typeKeyProps !== undefined) {
                   try {
                     result[typedParamKey] = typeKeyProps.encodingMap.decode(
-                      stringRouteValue,
-                      null
+                      stringRouteValue
                     );
                   } catch (e) {
                     // failed to decode, probably because wrong type recieved from query string
@@ -299,7 +298,7 @@ export default <
                         ? (deafultValue as { [key in string]: any })[
                             typedParamKey as string
                           ]
-                        : typeKeyProps.deafultValue;
+                        : typeKeyProps.defaultValue;
                     } else {
                       (errors as { [key in string]: any })[
                         typedParamKey as string

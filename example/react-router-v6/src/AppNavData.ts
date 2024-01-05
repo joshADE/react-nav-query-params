@@ -63,6 +63,7 @@ const { creator,
   customTypeKeyMapping: {
     // <- define custom type keys to encode and decode
     myCustomRecord: {
+      defaultValue: {}, // <- specify a default value for the type key
       category: "custom", // <- always use "custom"
       match: (v) => {
         // <- specify a way to match for the type key given an unkown value (error handling)
@@ -82,7 +83,6 @@ const { creator,
           return decoded;
         },
       },
-      sample: {}, // <- sample value of the type (if you type sample using the 'as' keyword you dont have to specify the type above)
     },
   },
 });
