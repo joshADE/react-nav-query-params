@@ -17,7 +17,6 @@ export type EncodingMapComplexValue<ParamType> = {
 export type SimpleRouteParamPropertyType =
   | string
   | number
-  | bigint
   | boolean
   | null;
 
@@ -41,19 +40,16 @@ export type TypeKeyToTypeMapping = {
   // simple types
   string: string;
   number: number;
-  bigint: bigint;
   boolean: boolean;
 
   // complex types
   // array types
   stringArray: string[];
   numberArray: number[];
-  bigintArray: bigint[];
   booleanArray: boolean[];
   // record types
   stringRecord: Record<string, string>;
   numberRecord: Record<string, number>;
-  bigintRecord: Record<string, bigint>;
   booleanRecord: Record<string, boolean>;
   // date
   date: Date;

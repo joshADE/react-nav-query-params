@@ -19,17 +19,6 @@ export function simpleTypeConvert(stringRouteValue: string, sample: unknown) {
       ) {
         return numberValue;
       }
-    case "bigint":
-      try {
-        const bigIntValue = BigInt(stringRouteValue);
-        if (
-          bigIntValue !== null &&
-          bigIntValue !== undefined &&
-          typeof bigIntValue === "bigint"
-        ) {
-          return bigIntValue;
-        }
-      } catch (e) {}
     case "boolean":
       return stringRouteValue === "true";
     case "string":
@@ -58,19 +47,6 @@ export function simpleTypeConvertWithError(
       } else {
         throw new Error("Number expected!");
       }
-    case "bigint":
-      try {
-        const bigIntValue = BigInt(stringRouteValue);
-        if (
-          bigIntValue !== null &&
-          bigIntValue !== undefined &&
-          typeof bigIntValue === "bigint"
-        ) {
-          return bigIntValue;
-        }
-      } catch (e) {
-        throw new Error("BigInt expected!");
-      }
     case "boolean":
       if (stringRouteValue === "true") return true;
       else if (stringRouteValue === "false") return false;
@@ -87,7 +63,7 @@ export function simpleTypeConvertWithError(
 
 export function matchArrayType(
   value: unknown,
-  simpleType: "string" | "number" | "boolean" | "bigint"
+  simpleType: "string" | "number" | "boolean"
 ) {
   return (
     typeof value !== "string" && Array.isArray(value) &&
@@ -97,7 +73,7 @@ export function matchArrayType(
 
 export function matchArrayTypeWithArrayCheck(
   value: unknown,
-  simpleType: "string" | "number" | "boolean" | "bigint"
+  simpleType: "string" | "number" | "boolean"
 ) {
   return (
     typeof value !== "string" &&
@@ -109,7 +85,7 @@ export function matchArrayTypeWithArrayCheck(
 
 export function matchRecordType(
   value: unknown,
-  simpleType: "string" | "number" | "boolean" | "bigint"
+  simpleType: "string" | "number" | "boolean"
 ) {
   if (typeof value !== "object" || value === null) {
     return false;

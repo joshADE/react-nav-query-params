@@ -50,24 +50,6 @@ export const validTypeMap: {
       return typeof value === "number";
     },
   },
-  bigint: {
-    defaultValue: BigInt(9007199254740991),
-    encodingMap: {
-      encode: (v) => {
-        return v.toString();
-      },
-      decode: (v) => {
-        return simpleTypeConvertWithError(
-          v,
-          BigInt(9007199254740991)
-        ) as bigint;
-      },
-    },
-    category: "simple",
-    match: (value) => {
-      return typeof value === "bigint";
-    },
-  },
   boolean: {
     defaultValue: false,
     encodingMap: {
@@ -119,28 +101,6 @@ export const validTypeMap: {
     category: "complex",
     match: (value) => {
       return matchArrayTypeWithArrayCheck(value, "number");
-    },
-  },
-  bigintArray: {
-    defaultValue: [BigInt(9007199254740991)],
-    encodingMap: {
-      encode: (v) => {
-        return EncodingMap.array.encode(v);
-      },
-      decode: (v) => {
-        const result = EncodingMap.array.decode(
-          v,
-          BigInt(9007199254740991)
-        ) as bigint[];
-        if (!matchArrayType(result, "bigint")) {
-          throw new Error("Failed to decode as bigint array.");
-        }
-        return result;
-      },
-    },
-    category: "complex",
-    match: (value) => {
-      return matchArrayTypeWithArrayCheck(value, "bigint");
     },
   },
   booleanArray: {
@@ -204,28 +164,6 @@ export const validTypeMap: {
     category: "complex",
     match: (value) => {
       return matchRecordType(value, "number");
-    },
-  },
-  bigintRecord: {
-    defaultValue: { sample: BigInt(-1) },
-    encodingMap: {
-      encode: (v) => {
-        return EncodingMap.record.encode(v);
-      },
-      decode: (v) => {
-        const result = EncodingMap.record.decode(v, BigInt(-1)) as Record<
-          string,
-          bigint
-        >;
-        if (!matchRecordType(result, "bigint")) {
-          throw new Error("Failed to decode as bigint record.");
-        }
-        return result;
-      },
-    },
-    category: "complex",
-    match: (value) => {
-      return matchRecordType(value, "bigint");
     },
   },
   booleanRecord: {
