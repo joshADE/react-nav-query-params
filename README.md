@@ -400,7 +400,7 @@ creator() / activator() / untypedActivator() //<-- now have access to custom typ
 
 - getQueryString(newParams, options?)
   - Args
-    - newParams: Object containing the new values for each param key of the associated route key
+    - newParams: Object containing the new values for each param key of the associated route key, null will remove an existing param
       - e.g. { param3: [12] } <- param3 will be set to param3=12 in the query string
     - options: Object containing one of the following options
       - full: (optional boolean) Specify whether to include the '?' in the query string
