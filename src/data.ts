@@ -27,7 +27,7 @@ export const validTypeMap: {
         return v;
       },
       decode: (v) => {
-        return simpleTypeConvertWithError(v, "sample") as string;
+        return simpleTypeConvertWithError(v, "string") as string;
       },
     },
     category: "simple",
@@ -42,7 +42,7 @@ export const validTypeMap: {
         return v.toString();
       },
       decode: (v) => {
-        return simpleTypeConvertWithError(v, -1) as number;
+        return simpleTypeConvertWithError(v, "number") as number;
       },
     },
     category: "simple",
@@ -57,7 +57,7 @@ export const validTypeMap: {
         return v.toString();
       },
       decode: (v) => {
-        return simpleTypeConvertWithError(v, false) as boolean;
+        return simpleTypeConvertWithError(v, "boolean") as boolean;
       },
     },
     category: "simple",
@@ -72,7 +72,7 @@ export const validTypeMap: {
         return EncodingMap.array.encode(v);
       },
       decode: (v) => {
-        const result = EncodingMap.array.decode(v, "sample") as string[];
+        const result = EncodingMap.array.decode(v, "string") as string[];
         if (!matchArrayType(result, "string")) {
           throw new Error("Failed to decode as string array.");
         }
@@ -91,7 +91,7 @@ export const validTypeMap: {
         return EncodingMap.array.encode(v);
       },
       decode: (v) => {
-        const result = EncodingMap.array.decode(v, -1) as number[];
+        const result = EncodingMap.array.decode(v, "number") as number[];
         if (!matchArrayType(result, "number")) {
           throw new Error("Failed to decode as number array.");
         }
@@ -110,7 +110,7 @@ export const validTypeMap: {
         return EncodingMap.array.encode(v);
       },
       decode: (v) => {
-        const result = EncodingMap.array.decode(v, false) as boolean[];
+        const result = EncodingMap.array.decode(v, "boolean") as boolean[];
         if (!matchArrayType(result, "boolean")) {
           throw new Error("Failed to decode as boolean array.");
         }
@@ -129,7 +129,7 @@ export const validTypeMap: {
         return EncodingMap.record.encode(v);
       },
       decode: (v) => {
-        const result = EncodingMap.record.decode(v, "sample") as Record<
+        const result = EncodingMap.record.decode(v, "string") as Record<
           string,
           string
         >;
@@ -151,7 +151,7 @@ export const validTypeMap: {
         return EncodingMap.record.encode(v);
       },
       decode: (v) => {
-        const result = EncodingMap.record.decode(v, -1) as Record<
+        const result = EncodingMap.record.decode(v, "number") as Record<
           string,
           number
         >;
@@ -173,7 +173,7 @@ export const validTypeMap: {
         return EncodingMap.record.encode(v);
       },
       decode: (v) => {
-        const result = EncodingMap.record.decode(v, false) as Record<
+        const result = EncodingMap.record.decode(v, "boolean") as Record<
           string,
           boolean
         >;
@@ -195,7 +195,8 @@ export const validTypeMap: {
         return EncodingMap.date.encode(v);
       },
       decode: (v) => {
-        const result = EncodingMap.date.decode(v, new Date()) as Date;
+        // "string" is a dummy value
+        const result = EncodingMap.date.decode(v, "string") as Date;
         if (!(result instanceof Date)) {
           throw new Error("Failed to decode as date.");
         }
@@ -216,10 +217,10 @@ export const EncodingMap: {
     encode: (value) => {
       return value.join(",");
     },
-    decode: (value, sampleSimpleValue) => {
+    decode: (value, simpleType) => {
       const splitValue = value
         .split(",");
-        return splitValue.map((v) => simpleTypeConvertWithError(v, sampleSimpleValue));
+        return splitValue.map((v) => simpleTypeConvertWithError(v, simpleType));
     }
   },
   record: {
@@ -239,7 +240,7 @@ export const EncodingMap: {
         objectEndSeperator; // { result }
       return encoded;
     },
-    decode: (value, sampleSimpleValue) => {
+    decode: (value, simpleType) => {
       const objectStartSeparator = "<";
       const objectEndSeperator = ">";
       const entrySeperator = ",";
@@ -258,7 +259,7 @@ export const EncodingMap: {
           if (len >= 2) {
             return [
               splitEntry[0],
-              simpleTypeConvertWithError(splitEntry[1], sampleSimpleValue),
+              simpleTypeConvertWithError(splitEntry[1], simpleType),
             ];
           } else {
             return [splitEntry[0], null];
@@ -277,7 +278,7 @@ export const EncodingMap: {
         .replace("-", hyphenSeperator)
         .replace(":", colonSeperator);
     },
-    decode: (value, sampleSimpleValue) => {
+    decode: (value) => {
       const hyphenSeperator = "-";
       const colonSeperator = ":";
       let newValue = value.replace(hyphenSeperator, "-");
@@ -285,7 +286,7 @@ export const EncodingMap: {
       if (isIsoDate(newValue)) {
         return new Date(newValue);
       } else {
-        return sampleSimpleValue as Date;
+        throw new Error("Failed to decode as date.");
       }
     },
   },

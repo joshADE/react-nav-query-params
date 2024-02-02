@@ -10,15 +10,12 @@ export type EncodingMapValue<ParamType> = {
 
 export type EncodingMapComplexValue<ParamType> = {
   encode: (value: ParamType) => string;
-  decode: (value: string, sampleSimpleValue: unknown) => ParamType;
+  decode: (value: string, simpleType: SimpleTypeKeys) => ParamType;
   defaultValue?: ParamType;
 };
 
 export type SimpleRouteParamPropertyType =
-  | string
-  | number
-  | boolean
-  | null;
+  TypeKeyToTypeMapping[SimpleTypeKeys] | null;
 
 export type ComplexEncodingKeyToTypeMapping = {
   array: Array<SimpleRouteParamPropertyType>;
@@ -54,6 +51,9 @@ export type TypeKeyToTypeMapping = {
   // date
   date: Date;
 };
+
+export type SimpleTypeKeys = keyof Pick<TypeKeyToTypeMapping, "string" | "number" | "boolean">;
+export type ComplexTypeKeys = keyof Omit<TypeKeyToTypeMapping, SimpleTypeKeys>;
 
 export type ValidQueryParamPropertyTypeKeys = keyof TypeKeyToTypeMapping;
 

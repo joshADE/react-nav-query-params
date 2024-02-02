@@ -1,5 +1,5 @@
 import { validTypeMap } from "./data";
-import { ValidQueryParamPropertyTypeKeys } from "./types";
+import { ValidQueryParamPropertyTypeKeys, SimpleTypeKeys } from "./types";
 
 export function isIsoDate(str: string) {
   if (!/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/.test(str)) return false;
@@ -8,8 +8,8 @@ export function isIsoDate(str: string) {
 }
 
 
-export function simpleTypeConvert(stringRouteValue: string, sample: unknown) {
-  switch (typeof sample) {
+export function simpleTypeConvert(stringRouteValue: string, simpleType: SimpleTypeKeys) {
+  switch (simpleType) {
     case "number":
       const numberValue = Number(stringRouteValue);
       if (
@@ -33,9 +33,9 @@ export function simpleTypeConvert(stringRouteValue: string, sample: unknown) {
 
 export function simpleTypeConvertWithError(
   stringRouteValue: string,
-  sample: unknown
+  simpleType: SimpleTypeKeys
 ) {
-  switch (typeof sample) {
+  switch (simpleType) {
     case "number":
       const numberValue = Number(stringRouteValue);
       if (
