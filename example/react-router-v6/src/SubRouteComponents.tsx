@@ -4,6 +4,7 @@ import {
   PageRoutingData,
   RouteMapping,
   linkToOtherPages,
+  TriggerEnum,
 } from "./AppNavData";
 import Button from "./Button";
 import styles2 from "./SubRouteComponent.module.css";
@@ -32,6 +33,7 @@ const Route1Component = () => {
     "Fred",
   ]);
   const [newName, setNewName] = useState<string>("John");
+
 
   const queryString = useMemo(() => {
     return getQueryStringRoute1(
@@ -306,7 +308,7 @@ const Route3Component = () => {
 
   const [name, setName] = useState<RouteMapping["route3"]["name"]>("Bob");
   const [trigger, setTrigger] =
-    useState<RouteMapping["route3"]["trigger"]>("first");
+    useState<RouteMapping["route3"]["trigger"]>(TriggerEnum.first);
 
   const queryString = useMemo(() => {
     return getQueryStringRoute3(
@@ -337,17 +339,17 @@ const Route3Component = () => {
               &lt;{`"first" | "second" | "third"`}&gt;
             </span>
           </h6>
-          {(["first", "second", "third"] as const).map((trig, index) => {
+          {(Object.entries(TriggerEnum)).map((trig, index) => {
             const id = `${trig}-${index}`;
             return (
               <div key={id}>
-                <label htmlFor={id}>{trig}</label>
+                <label htmlFor={id}>{trig[0]}</label>
                 <input
                   id={id}
                   type="radio"
                   name="trigger"
-                  checked={trigger === trig}
-                  onChange={() => setTrigger(trig)}
+                  checked={trigger === trig[1]}
+                  onChange={() => setTrigger(trig[1])}
                 />
               </div>
             );

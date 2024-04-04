@@ -1,0 +1,20 @@
+# Ignore build output
+build/
+
+# Ignore node_modules directory
+node_modules/
+
+# Ignore generated files
+*.min.js
+*.min.css
+
+# Ignore test files
+__tests__/
+*.test.js
+
+# Ignore coverage reports
+coverage/
+
+# Ignore configuration files
+.eslintrc
+.prettierrc

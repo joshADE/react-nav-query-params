@@ -1,5 +1,5 @@
-import { validTypeMap } from "./data";
-import { ValidQueryParamPropertyTypeKeys, SimpleTypeKeys } from "./types";
+import { validTypeMap } from "../data/data";
+import { SimpleTypeKeys, ValidQueryParamPropertyTypeKeys } from "../types/typeKeys";
 
 export function isIsoDate(str: string) {
   if (!/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/.test(str)) return false;
@@ -8,9 +8,10 @@ export function isIsoDate(str: string) {
 }
 
 
-export function simpleTypeConvert(stringRouteValue: string, simpleType: SimpleTypeKeys) {
+export function simpleTypeConvert(stringRouteValue: string | string[], simpleType: SimpleTypeKeys) {
+  stringRouteValue = Array.isArray(stringRouteValue) ? stringRouteValue[0] : stringRouteValue;
   switch (simpleType) {
-    case "number":
+    case "number": {
       const numberValue = Number(stringRouteValue);
       if (
         numberValue !== null &&
@@ -19,24 +20,29 @@ export function simpleTypeConvert(stringRouteValue: string, simpleType: SimpleTy
       ) {
         return numberValue;
       }
-    case "boolean":
+    }
+    break;
+    case "boolean": {
       return stringRouteValue === "true";
-    case "string":
+    }
+    case "string": {
       if (stringRouteValue === "null" || stringRouteValue === "undefined") {
         return null;
       }
       return stringRouteValue;
+    }
     default:
   }
   return null;
 }
 
 export function simpleTypeConvertWithError(
-  stringRouteValue: string,
+  stringRouteValue: string | string[],
   simpleType: SimpleTypeKeys
 ) {
+  stringRouteValue = Array.isArray(stringRouteValue) ? stringRouteValue[0] : stringRouteValue;
   switch (simpleType) {
-    case "number":
+    case "number": {
       const numberValue = Number(stringRouteValue);
       if (
         numberValue !== null &&
@@ -47,15 +53,19 @@ export function simpleTypeConvertWithError(
       } else {
         throw new Error("Number expected!");
       }
+    }
     case "boolean":
+      {
       if (stringRouteValue === "true") return true;
       else if (stringRouteValue === "false") return false;
       else throw new Error("Boolean expected!");
-    case "string":
+      }
+    case "string": {
       if (stringRouteValue === "null" || stringRouteValue === "undefined") {
         throw new Error("String expected!");
       }
       return stringRouteValue;
+    }
     default:
       return null;
   }
@@ -95,6 +105,20 @@ export function matchRecordType(
 
   return keys.length > 0 && keys.every((e) => typeof value[e as keyof typeof value] === simpleType);
 }
+
+export function matchRecordTypeWithNumberKeys(
+  value: unknown,
+  simpleType: "string" | "number" | "boolean"
+) {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const keys = Object.keys(value);
+
+  return keys.length > 0 && keys.every((e) => typeof e === "number" && typeof value[e as keyof typeof value] === simpleType);
+}
+
 
 export function findTypeKey(
   input: unknown,

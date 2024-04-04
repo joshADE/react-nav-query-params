@@ -17,6 +17,12 @@ export const linkToOtherPages: {
 
 export type PageType = keyof typeof PageRoutingData;
 
+export enum TriggerEnum {
+  first = "first",
+  second = "second",
+  third = "third",
+}
+
 // do not include optional types in the route mapping object type
 
 export type RouteMapping = {
@@ -32,7 +38,7 @@ export type RouteMapping = {
     defaultViewCount: number;
   };
   route3: {
-    trigger: "first" | "second" | "third";
+    trigger: TriggerEnum;
     name: string;
   };
 };
@@ -55,10 +61,11 @@ function isCustomRecordType(
 }
 
 const { creator, 
-  activator, 
-  // untypedActivator 
+  activator,
 } = createNavManager<{
   myCustomRecord: Record<string, number | string | boolean>;
+},{
+  myCustomRecord: { expanded?: boolean, test: string },
 }>({
   customTypeKeyMapping: {
     // <- define custom type keys to encode and decode
@@ -74,21 +81,28 @@ const { creator,
         encode: (v) => {
           return JSON.stringify(v);
         },
-        decode: (v) => {
+        decode: (v, o) => {
           // <- can throw an Error inside the decode function saying the string value cannot be decoded
-          const decoded = JSON.parse(v);
+          const decoded = JSON.parse(Array.isArray(v) ? v[0] : v);
           if (!isCustomRecordType(decoded)) {
             throw new Error("Failed to decode myCustomRecord");
           }
           return decoded;
         },
+        encodingOptions: {
+          expanded: true,
+          test: "test",
+        }, // <- specify options for encoding/decoding
+        
       },
     },
   },
 });
 
 // activator function helps to determine the corresponding type key given the type of the route keys and their params keys
-const routeMapping = activator<RouteMapping>({
+const routeMapping = activator
+<RouteMapping>
+({
   route1: {
     typeKeyMapping: {
       numbers: "numberArray", // <-- param key : type key (mapping)
@@ -97,6 +111,16 @@ const routeMapping = activator<RouteMapping>({
       names: "stringArray",
     },
     programmaticNavigate: true, // only read the query params for this route when naviating programmatically if set to true
+    options: {
+      numbers: {
+        separator: "*",
+        expanded: true,
+      },
+      names: {
+        separator: "*",
+        expanded: true,
+      },
+    }
   },
   route2: {
     typeKeyMapping: {
@@ -104,12 +128,18 @@ const routeMapping = activator<RouteMapping>({
       defaultViewCount: "number",
     },
     programmaticNavigate: false,
+
   },
   route3: {
     typeKeyMapping: {
-      trigger: "string",
+      trigger: "stringEnum",
       name: "string",
     },
+    options: {
+      trigger: {
+        enumType: Object.values(TriggerEnum),
+      },
+    }
   },
 });
 
@@ -120,6 +150,12 @@ export const { NavQueryContext, useNavQueryParams } = creator(
     validTypeEncodingMapOverride: {
       stringRecord: {
         defaultValue: {}, // set the default value for the stringRecord type key (can also specify default for each param key when using hook, but this value will be a fallback)
+      },
+      numberArray: {
+        encodingOptions: {
+          separator: "*",
+          expanded: true,
+        }
       },
     },
   }

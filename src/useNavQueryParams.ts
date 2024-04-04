@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   useMemo,
   createContext,
@@ -5,7 +6,7 @@ import {
   useCallback,
   useEffect,
 } from "react";
-import { validTypeMap } from "./data";
+import { validTypeMap } from "./data/data";
 import {
   ClearQueryParamsOptions,
   GetQueryParamsResult,
@@ -14,52 +15,95 @@ import {
   QueryStringOptions,
   RouteMappingGlobalOptions,
   RouteParamBaseType,
-  ValidQueryParamPropertyTypeKeys,
   RouteMappingCustomSetting,
   RouteMappingConfiguration,
   GetQueryParamsOptions,
   FilterInvalidParamKeys,
-  TypeMapValue,
-  TypeKeyToTypeMapping,
   QueryStringParams,
-} from "./types";
-import { findTypeKeyOfString } from "./utils";
+  TypeKeyOptionsMapping,
+  TKeyMapper,
+  ExtractValueFromMapperTuple,
+  TBaseType,
+  MapperType,
+  TypeKeyMappingValueInit,
+} from "./types/types";
+import { findTypeKeyOfString } from "./utils/utils";
+import {
+  TypeKeyToTypeMapping,
+  ValidQueryParamPropertyTypeKeys,
+  CustomOptionsTypeValue,
+  CustomTypeKeysMap,
+  CustomTypeKeysMapDefault,
+} from "./types/typeKeys";
 
 let loadedByUser = true;
 
+
 export default <
-  TCustomKeysDefinition extends { [customTypeKey: string]: any } = {}
+  TCustomKeysDefinition extends CustomTypeKeysMap = CustomTypeKeysMapDefault,
+  TCustomKeyOptions extends CustomOptionsTypeValue<TCustomKeysDefinition> = CustomOptionsTypeValue<TCustomKeysDefinition>,
 >(
-  customSettings: RouteMappingCustomSetting<TCustomKeysDefinition>
+  customSettings: RouteMappingCustomSetting<TCustomKeysDefinition, TCustomKeyOptions>
 ) => {
-  type ValidKeys = keyof TCustomKeysDefinition | keyof TypeKeyToTypeMapping;
+  type PossibleKeys = keyof TCustomKeysDefinition | keyof TypeKeyToTypeMapping;
 
-  type TBaseType<U> = { [routeKey in keyof U]: { programmaticNavigate?: boolean; typeKeyMapping: { [paramKey in keyof any]: ValidKeys } } };
 
-  type ValueType =
+  type PossibleValueTypes =
     | TCustomKeysDefinition[keyof TCustomKeysDefinition]
     | TypeKeyToTypeMapping[keyof TypeKeyToTypeMapping];
 
+
   type TType<U> = {
     [routeKey in keyof U]?: {
-      [paramKey in keyof U[routeKey]]?: ValueType;
+      [paramKey in keyof U[routeKey]]?: PossibleValueTypes;
     };
   };
 
-  type TTypeKeys<U extends TBaseType<U>> = {
+
+  type TTypeKeys<U extends TBaseType<U, PossibleKeys, TCustomKeysDefinition, TCustomKeyOptions>> = {
     [routeKey in keyof U]: {
       [paramKey in keyof U[routeKey]["typeKeyMapping"]]: TDefaultValue<U[routeKey]["typeKeyMapping"][paramKey]>;
     };
   };
 
-  type TDefault<U extends TBaseType<U>> = {
-    [routeKey in keyof U]: {
-      programmaticNavigate?: boolean; typeKeyMapping:
-      {
-        [paramKey in keyof U[routeKey]["typeKeyMapping"]]: ValidKeys;
+
+  type TDefault<U extends TBaseType<U, PossibleKeys, TCustomKeysDefinition, TCustomKeyOptions>> = {
+    [routeKey in keyof U]:
+    {
+      programmaticNavigate?: boolean,
+      typeKeyMapping: {
+          [paramKey in keyof TBaseType<U, PossibleKeys,TCustomKeysDefinition, TCustomKeyOptions>[routeKey]["typeKeyMapping"]]: PossibleKeys;
       };
+      options?:  TypeKeyOptionsMapping<
+          { [key in keyof U[routeKey]["typeKeyMapping"]]:
+            ExtractValueFromMapperTuple<
+              TKeyMapper<U>,
+              routeKey,
+              key
+            >
+          },
+          TCustomKeysDefinition,
+          TCustomKeyOptions>
     }
   };
+
+  type TOptions<
+    N, U extends MapperType<N>
+    > = {
+      [routeKey in keyof (U)]:{
+        options?: 
+        TypeKeyOptionsMapping<
+            { [key in keyof (U)[routeKey]["typeKeyMapping"]]:
+              ExtractValueFromMapperTuple<
+                TKeyMapper<TypeKeyMappingValueInit<N, U>>,
+                routeKey,
+                key
+              >
+            },
+            TCustomKeysDefinition,
+            TCustomKeyOptions>      
+      }
+    };
 
   type TDefaultValue<U> = U extends keyof TCustomKeysDefinition
     ? TCustomKeysDefinition[U]
@@ -67,22 +111,43 @@ export default <
     ? TypeKeyToTypeMapping[U]
     : never;
 
+
   const activator = <
-    S extends TType<S> = any
+    N extends TType<N> = any,
+    Q extends TBaseType<any, PossibleKeys, TCustomKeysDefinition, TCustomKeyOptions> = TDefault<any>,
+    S extends TTypeKeys<Q> = TTypeKeys<Q>,
+    R extends TType<N> = TType<S>,
+    T extends TType<any> = TType<any> extends N ? S : N,
+    I extends RouteParamBaseType<any, TCustomKeysDefinition, TCustomKeyOptions, any> = RouteParamBaseType<N, TCustomKeysDefinition, TCustomKeyOptions, Q>,
+    V extends I = I, 
   >(
-    v: RouteParamBaseType<S, keyof S, TCustomKeysDefinition>
+    v: Q & RouteParamBaseType<TType<any> extends N ? R : N, TCustomKeysDefinition, TCustomKeyOptions, TType<any> extends N ? Q : I> 
+    & TOptions<N, TType<any> extends N ? Q : V>
   ) => {
-    return v;
+    return v as unknown as RouteParamBaseType<T, TCustomKeysDefinition, TCustomKeyOptions>;
   };
 
-  const untypedActivator = <S extends TDefault<any> = TDefault<any>, T extends TTypeKeys<any> = TTypeKeys<S>>(
+
+  const untypedActivator = <S extends TBaseType<any, PossibleKeys, TCustomKeysDefinition, TCustomKeyOptions> = TDefault<any>, T extends TTypeKeys<any> = TTypeKeys<S>>(
     v: S
   ) => {
-    return v as unknown as RouteParamBaseType<T, keyof T, TCustomKeysDefinition>;
+    return v as unknown as RouteParamBaseType<T, TCustomKeysDefinition, TCustomKeyOptions>;
   }
 
+  const activatorOld = <
+    N extends TType<N> = any,
+    Q extends TBaseType<any, PossibleKeys, TCustomKeysDefinition, TCustomKeyOptions> = TDefault<any>,
+    S extends TTypeKeys<Q> = TTypeKeys<Q>,
+    R extends TType<N> = TType<S>,
+    T extends TType<any> = TType<any> extends N ? S : N
+  >(
+    v: Q & RouteParamBaseType<R, TCustomKeysDefinition, TCustomKeyOptions>
+  ) => {
+    return v as unknown as RouteParamBaseType<T, TCustomKeysDefinition, TCustomKeyOptions>;
+  };
+
   const creator = <T extends TType<T>>(
-    routeMapping: RouteParamBaseType<T, keyof T, TCustomKeysDefinition>,
+    routeMapping: RouteParamBaseType<T, TCustomKeysDefinition, TCustomKeyOptions>,
     initialOptions: RouteMappingGlobalOptions = {},
     configurations: RouteMappingConfiguration = {}
   ) => {
@@ -92,29 +157,34 @@ export default <
     const validTypeMapWithOverrides =
       configurations?.validTypeEncodingMapOverride
         ? (Object.fromEntries(
-            Object.entries(validTypeMap).map(([key, value]) => {
-              const typeKey = key as ValidQueryParamPropertyTypeKeys;
-              const typeMapOverride =
-                configurations.validTypeEncodingMapOverride!;
-              if (typeMapOverride[typeKey] !== undefined) {
-                const overrides = typeMapOverride[typeKey]!;
-                const { defaultValue, decode, encode } = overrides;
-                if (
-                  decode !== null &&
-                  decode !== undefined &&
-                  encode !== null &&
-                  encode !== undefined
-                ) {
-                  value.encodingMap.decode = decode;
-                  value.encodingMap.encode = encode;
-                }
-                if (defaultValue !== null && defaultValue !== undefined) {
-                  value.defaultValue = defaultValue;
-                }
+          Object.entries(validTypeMap).map(([key, value]) => {
+            const typeKey = key as ValidQueryParamPropertyTypeKeys;
+            const typeMapOverride =
+              configurations.validTypeEncodingMapOverride!;
+            if (typeMapOverride[typeKey] !== undefined) {
+              const overrides = typeMapOverride[typeKey]!;
+              const { defaultValue, decode, encode, encodingOptions } = overrides;
+              if (
+                decode !== null &&
+                decode !== undefined &&
+                encode !== null &&
+                encode !== undefined
+              ) {
+                value.encodingMap.decode = decode;
+                value.encodingMap.encode = encode;
               }
-              return [typeKey, value];
-            })
-          ) as typeof validTypeMap)
+              if (defaultValue !== null && defaultValue !== undefined) {
+                value.defaultValue = defaultValue;
+              }
+
+              if (encodingOptions !== null && encodingOptions !== undefined) {
+                value.encodingMap.encodingOptions = encodingOptions;
+              }
+
+            }
+            return [typeKey, value];
+          })
+        ) as typeof validTypeMap)
         : validTypeMap;
     const possibleTypeMap = {
       ...(customSettings?.customTypeKeyMapping ?? {}),
@@ -198,6 +268,7 @@ export default <
           ][];
 
           // removing the new params with undefined type
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           paramsToEncode = paramsToEncode.filter(([_, value]) => {
             return value !== undefined;
           });
@@ -210,26 +281,35 @@ export default <
 
           const routeProps = routeMapping[routeKey];
           const tyepKeyMapping = routeProps.typeKeyMapping;
+          const routeOptions = routeProps.options;
 
           paramsToEncode.forEach(([paramKey, value]) => {
-            let typeKey =
+            const typeKey =
               tyepKeyMapping[paramKey as keyof typeof tyepKeyMapping];
 
             if (typeKey === "unknown" || typeKey === undefined) {
               return;
             }
 
-            const typeKeyProps = possibleTypeMap[typeKey] as TypeMapValue<any>;
+            const typeKeyProps = possibleTypeMap[typeKey as keyof typeof possibleTypeMap] as any;
             if (typeKeyProps !== undefined) {
               const typedValue = value as any;
               // removing new params with null value
-              if (value === null){
+              if (value === null) {
                 params.delete(paramKey.toString());
-              }else {
-                params.set(
-                  paramKey.toString(),
-                  typeKeyProps.encodingMap.encode(typedValue)
-                );
+              } else {
+                const paramOptions = routeOptions?.[paramKey as keyof typeof routeOptions];
+                const values = typeKeyProps.encodingMap.encode(typedValue, paramOptions ?? typeKeyProps.encodingMap.encodingOptions);
+                if (Array.isArray(values)) {
+                  values.forEach((value) => {
+                    params.append(
+                      paramKey.toString(),
+                      value.toString()
+                    );
+                  });
+                } else {
+                  params.set(paramKey.toString(), values.toString());
+                }
               }
             }
           });
@@ -264,40 +344,48 @@ export default <
             );
           }
 
-          let result: Partial<
+          const result: Partial<
             GetValueTypeOfKeyProperty<T, TInputRouteKey, TCustomKeysDefinition>
           > = {};
-          let errors: ParsingErrorResultType<
+          const errors: ParsingErrorResultType<
             T,
             TInputRouteKey,
             TCustomKeysDefinition
           > = {};
           const params = new URLSearchParams(query);
+          const routeOptions = routeMapping[key].options;
           Object.entries(routeMapping[key].typeKeyMapping).forEach(
             ([key, typeKeyValue]) => {
-              const stringRouteValue = params.get(key);
+              const stringRouteValues = params.getAll(key);
 
               const typedParamKey = key as keyof typeof result;
 
-              if (stringRouteValue) {
+              if (stringRouteValues.length > 0) {
                 const typeKey = typeKeyValue as
                   | ValidQueryParamPropertyTypeKeys
                   | keyof TCustomKeysDefinition;
 
+                const stringRouteValue = stringRouteValues[0];
+
                 const typeKeyProps = possibleTypeMap[typeKey];
+
                 if (typeKeyProps !== undefined) {
                   try {
-                    result[typedParamKey] = typeKeyProps.encodingMap.decode(
-                      stringRouteValue
-                    );
+                    const options = typeKeyProps.encodingMap.encodingOptions as any;
+                    const decode = typeKeyProps.encodingMap.decode as any;
+                    const paramOptions = routeOptions?.[key as keyof typeof routeOptions];
+                    result[typedParamKey] = decode ? decode(
+                      stringRouteValues.length > 1 ? stringRouteValues : stringRouteValue,
+                      paramOptions ?? options
+                    ) : undefined;
                   } catch (e) {
                     // failed to decode, probably because wrong type recieved from query string
                     if (useDefualtValuesMap[typedParamKey]) {
                       const deafultValue = options?.defaults;
                       result[typedParamKey] = deafultValue
                         ? (deafultValue as { [key in string]: any })[
-                            typedParamKey as string
-                          ]
+                        typedParamKey as string
+                        ]
                         : typeKeyProps.defaultValue;
                     } else {
                       (errors as { [key in string]: any })[
@@ -331,10 +419,10 @@ export default <
             FilterInvalidParamKeys<T[TInputRouteKey], TCustomKeysDefinition>
           > = {}
         ) => {
-          let clearMap : {[key in FilterInvalidParamKeys<
-              T[TInputRouteKey],
-              TCustomKeysDefinition
-            >]?: boolean} = {};
+          let clearMap: { [key in FilterInvalidParamKeys<
+            T[TInputRouteKey],
+            TCustomKeysDefinition
+          >]?: boolean } = {};
 
           let shouldFilter = false;
 
@@ -363,11 +451,11 @@ export default <
           }
 
           const params = new URLSearchParams(query);
-          
-          const clearingParamKeys = Object.keys(!shouldFilter ? routeMapping[key].typeKeyMapping: clearMap);
+
+          const clearingParamKeys = Object.keys(!shouldFilter ? routeMapping[key].typeKeyMapping : clearMap);
           const currentParamKeys = Array.from(Object.keys(params));
 
-          var setUnion = currentParamKeys.filter(x => clearingParamKeys.includes(x));
+          const setUnion = currentParamKeys.filter(x => clearingParamKeys.includes(x));
 
           if (setUnion.length === 0) {
             // no params to clear
@@ -413,5 +501,6 @@ export default <
     activator,
     creator,
     untypedActivator,
+    activatorOld,
   };
 };
