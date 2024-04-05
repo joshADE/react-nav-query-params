@@ -107,7 +107,7 @@ const routeMapping = activator
     typeKeyMapping: {
       numbers: "numberArray", // <-- param key : type key (mapping)
       focus: "string",
-      display: "myCustomRecord",
+      display: "booleanRecord",
       names: "stringArray",
     },
     programmaticNavigate: true, // only read the query params for this route when naviating programmatically if set to true

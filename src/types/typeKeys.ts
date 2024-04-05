@@ -14,9 +14,9 @@ export type TypeKeyToTypeMapping = {
   numberRecord: Record<string, number>;
   booleanRecord: Record<string, boolean>;
   // record types with number keys
-  stringRecordWithNumberKeys: Record<number, string>;
-  numberRecordWithNumberKeys: Record<number, number>;
-  booleanRecordWithNumberKeys: Record<number, boolean>;
+//   stringRecordWithNumberKeys: Record<number, string>;
+//   numberRecordWithNumberKeys: Record<number, number>;
+//   booleanRecordWithNumberKeys: Record<number, boolean>;
   // enums
   stringEnum: string;
   numberEnum: number;
@@ -61,6 +61,7 @@ export type TypeKeyToOptionsTypeMapping = {
         objectEndSeparator?: string;
         objectEntrySeparator?: string;
         keyValueSeparator?: string;
+        parseNumbers?: boolean;
     };
     stringRecordWithNumberKeys: {
         objectStartSeparator?: string;
@@ -132,7 +133,7 @@ export type TypeKeyToOptionsTypeMapping = {
 
 export type TypeKeyToOptionsTypeMappingKeys = keyof TypeKeyToOptionsTypeMapping;
 
-export type DefaultOptionsType = OptionsType<object>;
+export type DefaultOptionsType = OptionsType<unknown>;
 
 export type GetOptionsForValidTypeKey<T> = T extends TypeKeyToOptionsTypeMappingKeys ?
 TypeKeyToOptionsTypeMapping[T]: DefaultOptionsType;

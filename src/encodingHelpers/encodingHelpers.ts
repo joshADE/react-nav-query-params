@@ -22,9 +22,9 @@ export const EncodingHelperConstants = {
         separator: ",",
     },
     record: {
-        objectStartSeparator: "<",
-        objectEndSeparator: ">",
-        objectEntrySeparator: ">",
+        objectStartSeparator: "{",
+        objectEndSeparator: "}",
+        objectEntrySeparator: ",",
         keyValueSeparator: ":",
     },
     date: {

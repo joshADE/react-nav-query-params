@@ -10,7 +10,7 @@ import {
   matchArrayTypeWithArrayCheck,
   matchRecordType,
   simpleTypeConvertWithError,
-  matchRecordTypeWithNumberKeys,
+  // matchRecordTypeWithNumberKeys,
 } from "../utils/utils";
 
 import { EncodingHelpers } from "../encodingHelpers/encodingHelpers";
@@ -157,51 +157,51 @@ export const validTypeMap: {
       return matchRecordType(value, "boolean");
     },
   },
-  stringRecordWithNumberKeys: {
-    defaultValue: { 0: "sample" },
-    encodingMap: {
-      encode: (v, o) => {
-        return EncodingHelpers.stringRecordWithNumberKeys.encode(v, o);
-      },
-      decode: (v, o) => {
-        return EncodingHelpers.stringRecordWithNumberKeys.decode(v, o);
-      },
-    },
-    category: "complex",
-    match: (value) => {
-      return matchRecordTypeWithNumberKeys(value, "string");
-    },
-  },
-  numberRecordWithNumberKeys: {
-    defaultValue: { 0: -1 },
-    encodingMap: {
-      encode: (v, o) => {
-        return EncodingHelpers.numberRecordWithNumberKeys.encode(v, o);
-      },
-      decode: (v, o) => {
-        return EncodingHelpers.numberRecordWithNumberKeys.decode(v, o);
-      },
-    },
-    category: "complex",
-    match: (value) => {
-      return matchRecordTypeWithNumberKeys(value, "number");
-    },
-  },
-  booleanRecordWithNumberKeys: {
-    defaultValue: { 0: false },
-    encodingMap: {
-      encode: (v, o) => {
-        return EncodingHelpers.booleanRecordWithNumberKeys.encode(v, o);
-      },
-      decode: (v, o) => {
-        return EncodingHelpers.booleanRecordWithNumberKeys.decode(v, o);
-      },
-    },
-    category: "complex",
-    match: (value) => {
-      return matchRecordTypeWithNumberKeys(value, "boolean");
-    },
-  },
+  // stringRecordWithNumberKeys: {
+  //   defaultValue: { 0: "sample" },
+  //   encodingMap: {
+  //     encode: (v, o) => {
+  //       return EncodingHelpers.stringRecordWithNumberKeys.encode(v, o);
+  //     },
+  //     decode: (v, o) => {
+  //       return EncodingHelpers.stringRecordWithNumberKeys.decode(v, o);
+  //     },
+  //   },
+  //   category: "complex",
+  //   match: (value) => {
+  //     return matchRecordTypeWithNumberKeys(value, "string");
+  //   },
+  // },
+  // numberRecordWithNumberKeys: {
+  //   defaultValue: { 0: -1 },
+  //   encodingMap: {
+  //     encode: (v, o) => {
+  //       return EncodingHelpers.numberRecordWithNumberKeys.encode(v, o);
+  //     },
+  //     decode: (v, o) => {
+  //       return EncodingHelpers.numberRecordWithNumberKeys.decode(v, o);
+  //     },
+  //   },
+  //   category: "complex",
+  //   match: (value) => {
+  //     return matchRecordTypeWithNumberKeys(value, "number");
+  //   },
+  // },
+  // booleanRecordWithNumberKeys: {
+  //   defaultValue: { 0: false },
+  //   encodingMap: {
+  //     encode: (v, o) => {
+  //       return EncodingHelpers.booleanRecordWithNumberKeys.encode(v, o);
+  //     },
+  //     decode: (v, o) => {
+  //       return EncodingHelpers.booleanRecordWithNumberKeys.decode(v, o);
+  //     },
+  //   },
+  //   category: "complex",
+  //   match: (value) => {
+  //     return matchRecordTypeWithNumberKeys(value, "boolean");
+  //   },
+  // },
   stringEnum: {
     defaultValue: "sample",
     encodingMap: {
