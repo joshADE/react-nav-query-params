@@ -171,7 +171,7 @@ const routeMapping = activator({
               // param key based on the type key that is used
       param9: { // param9 is a 'stringEnum' which has an option of enumType
                 // to specify the valid values when encoding/decoding
-        enumType: Object.values(SampleEnum),
+        enumType: ["one", "two", "three"],
       },
     }
   },
@@ -399,7 +399,6 @@ type TypeKeyToOptions = {
       objectEndSeparator?: string;
       objectEntrySeparator?: string;
       keyValueSeparator?: string;
-      parseNumbers?: boolean;
   };
   stringEnum: {
       enumType: string[]; // specify the allowed values used when encoding/decoding the enum 
@@ -433,9 +432,9 @@ function isNumericRange(value: unknown): value is [number, number] {
 
 
 const { creator, activator } = createNavManager<{
-  numericRange: [number, number]; // <-- name: type of custom typekey
+  numericRange: [number, number]; // <-- name: type of custom type key
 },{
-  numericRange: { expanded?: boolean, test: string },  // <-- name: options (must be object type) of custom typekey
+  numericRange: { expanded?: boolean, test: string },  // <-- name: options (must extend object type) of custom typekey
 }>
 ({
   customTypeKeyMapping: { // <- define custom type keys to encode and decode
@@ -482,7 +481,7 @@ creator() / activator() //<-- now have access to custom type/type key
 ```jsx
 
 // Creating custom type keys with this package using only JavaScript is very difficult because
-// javascript does allow you to specify types (niether does it enforce type checking)
+// javascript does not allow you to specify types (niether does it enforce type checking)
 // and any custom type key you create with have the associated type of any, but you can still use
 // the package to create type keys that enforce/validate the query params
 

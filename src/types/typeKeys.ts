@@ -61,7 +61,6 @@ export type TypeKeyToOptionsTypeMapping = {
         objectEndSeparator?: string;
         objectEntrySeparator?: string;
         keyValueSeparator?: string;
-        parseNumbers?: boolean;
     };
     stringRecordWithNumberKeys: {
         objectStartSeparator?: string;
