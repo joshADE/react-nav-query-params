@@ -35,6 +35,12 @@ export const Routes = {
 
 type SampleStringUnion = "one" | "two" | "three";
 
+enum SampleEnum = {
+  one = "one",
+  two = "two",
+  three = "three"
+}
+
 export type QueryParamTypeMapping  { // <-- * use type
     [Routes.Route1]: {
         param1: {[sample in SampleStringUnion]?: boolean};
@@ -49,6 +55,7 @@ export type QueryParamTypeMapping  { // <-- * use type
     [Routes.Route3]: {
         param7: "first" | "second" | "third";
         param8: string;
+        param9: SampleEnum;
     }
 }
 
@@ -60,13 +67,13 @@ export type QueryParamTypeMapping  { // <-- * use type
 // * encoding/decoding is done based on type key (a key associated with a specific type)
 // The supported type keys are listed  below under the section 'List of Type Keys & Types'
 
-const { creator, activator, untypedActivator } = createNavManager({
+const { creator, activator } = createNavManager({
   customTypeKeyMapping: {}
 });
 
 // use the activator function returned to help enforce typescript's type checking/auto-completion
 // activator function helps to determine the corresponding type key used for encoding/decoding given the type of each params keys
-// (could also replace activator with untypedActivator if you don't want to specify a type as the Generic argument, as seen in the JS example below)
+// (could also exclude the generic argument, as seen in the JS example below)
 
 const routeMapping = activator<QueryParamTypeMapping>({ 
   [Routes.Route1]: {
@@ -88,7 +95,15 @@ const routeMapping = activator<QueryParamTypeMapping>({
     typeKeyMapping: {
       param7: "string",
       param8: "string",
+      param9: "stringEnum",
     },
+    options: { // here you can specify extra options for the 
+              // param key based on the type key that is used
+      param9: { // param9 is a 'stringEnum' which has an option of enumType
+                // to specify the valid values when encoding/decoding
+        enumType: Object.values(SampleEnum),
+      },
+    }
   },
 });
 
@@ -125,12 +140,12 @@ export const Routes = {
 // * encoding/decoding is done based on type key (a key associated with a specific type)
 // The supported type keys are listed  below under the section 'List of Type Keys & Types'
 
-const { creator, untypedActivator } = createNavManager({
+const { creator, activator } = createNavManager({
   customTypeKeyMapping: {}
 });
 
 
-const routeMapping = untypedActivator({ 
+const routeMapping = activator({ 
   [Routes.Route1]: {
     typeKeyMapping: {
       param1: "booleanRecord", // <-- param key : type key (mapping)
@@ -150,7 +165,15 @@ const routeMapping = untypedActivator({
     typeKeyMapping: {
       param7: "string",
       param8: "string",
+      param9: "stringEnum",
     },
+    options: { // here you can specify extra options for the 
+              // param key based on the type key that is used
+      param9: { // param9 is a 'stringEnum' which has an option of enumType
+                // to specify the valid values when encoding/decoding
+        enumType: Object.values(SampleEnum),
+      },
+    }
   },
 });
 
@@ -258,19 +281,32 @@ function ReadingParams(){
 
     // All functions returned by the hook are memoized using useCallback,
     // getQueryParams has a dependency on the query string used in the URL
-    // so if the query string changes, all effects with the function as a
-    // dependency will rerun
+    // so if the query string changes, all dependency arrays with the 
+    // function as a dependency will rerun
+
+    // url: localhost:3000/route1?param1=%7B%22one%22%3Atrue%7D&param2=three
+
+    console.log(
+      "Value of param2 query param is 'two': ",
+      getQueryParamsRoute1().values?.param2 === "two") //<-- false
+
+    // getQueryParamsRoute1 function will get the query params that 
+    // are associated with the 'route1' route key which is mapped to the 
+    // the url path route1 
 
 
-    useEffect(() => {
-
-        console.log("route1:", getQueryParamsRoute1()); // logs out route1: { values, errors } -> values.param1, and errors.param1, etc...
-        clearQueryParamsRoute1(); // clears all query params from url associated with route1
-
-    }, [getQueryParamsRoute1, clearQueryParamsRoute1])
+     
 
   return (
     <div>
+    {/* The below button is optional */}
+      <button
+        // clearQueryParamsRoute1 clears all query params from 
+        // url associated with route1
+        onClick={() => { clearQueryParamsRoute1() }}
+      >
+        Clear Params
+      </button>
         Check the console to see the query params       
     </div>
   )
@@ -289,6 +325,9 @@ function NavigatingAndSettingParams() {
 
   const navigate = useNavigate(); // from react router v6
 
+    // url: localhost:3000/route1?param2=three&param1=%7B%three%22%3Atrue%7D&
+    // param3=10%2C30
+
  
     return (
     <div>
@@ -299,8 +338,10 @@ function NavigatingAndSettingParams() {
 
 ```
 
-### List of Type Keys & Types
+### List of Provided Type Keys & Types & Options
 ```tsx
+// (It is possible to create your own type keys / types as well as options)
+// (Look below at the Custom Types / Type Keys section)
 type TypeKeys = {
   // simple types
   "string": string;
@@ -316,8 +357,65 @@ type TypeKeys = {
   "stringRecord": Record<string, string>;
   "numberRecord": Record<string, number>;
   "booleanRecord": Record<string, boolean>;
+  // enums
+  "stringEnum": string;
+  "numberEnum": number;
   // date
   "date": Date;
+};
+
+type TypeKeyToOptions = {
+  // array types
+  stringArray: { 
+    separator: string; // specify the separator used when encoding/decoding
+                        // the array i.e. '*' rather than ','(%2C)
+    expanded?: boolean; // set to true to encode in the long form (i.e. param3=20&param3=40)
+                        // rather than short form (param3=20,40)
+  };
+  numberArray: { 
+    separator: string; 
+    expanded?: boolean; 
+  };
+  booleanArray: { 
+    separator: string; 
+    expanded?: boolean; 
+  };
+  // record types
+  stringRecord: {
+      objectStartSeparator?: string; // replaces the objectStartSeparator character'{' when 
+                                      // encoding/decoding
+      objectEndSeparator?: string;
+      objectEntrySeparator?: string;
+      keyValueSeparator?: string;
+  };
+  numberRecord: {
+      objectStartSeparator?: string;
+      objectEndSeparator?: string;
+      objectEntrySeparator?: string;
+      keyValueSeparator?: string;
+  };
+  booleanRecord: {
+      objectStartSeparator?: string;
+      objectEndSeparator?: string;
+      objectEntrySeparator?: string;
+      keyValueSeparator?: string;
+      parseNumbers?: boolean;
+  };
+  stringEnum: {
+      enumType: string[]; // specify the allowed values used when encoding/decoding the enum 
+                          // i.e. Object.values(EnumType) where all the values have 
+                          // to extends the string type
+  };
+  numberEnum: {
+      enumType: number[];
+  };
+  // date
+  date: { 
+      format?: "ISO", // specify the format (currently the only supported format is ISO)
+      hyphenSeperator: string;  // replaces the hyphenSeperator character'-' when 
+                                // encoding/decoding the ISO date
+      colonSeperator: string;
+  };
 };
 
 ```
@@ -334,29 +432,48 @@ function isNumericRange(value: unknown): value is [number, number] {
 }
 
 
-const { creator, activator } = createNavManager({
+const { creator, activator } = createNavManager<{
+  numericRange: [number, number]; // <-- name: type of custom typekey
+},{
+  numericRange: { expanded?: boolean, test: string },  // <-- name: options (must be object type) of custom typekey
+}>
+({
   customTypeKeyMapping: { // <- define custom type keys to encode and decode
-    numericRangeCustomType: {
+    numericRange: {
       category: "custom", // <- always use "custom"
-      sample: [1, 2] as [number, number], // <- sample value of the type
+      defaultValue: [0, 1] // <-- optional default value(used for type setting)
       encodingMap: { // <- specify a way to encode/decode type associated with the custom type key
-        encode: (value) => {
+        encode: (value, options) => { // <-- encode funtion takes in a value matching the type ([number, number]) and must return a string or string[]
           return JSON.stringify(value);
         },
-        decode: (value) => { // <- can throw an Error inside the decode function saying the string value cannot be decoded
-          const decoded = JSON.parse(value); 
+        decode: (value, options) => {  // <-- decode funtion takes in a string or string[] and 
+          // must return a value matching the type ([number, number])
+          // <- You can also throw an Error inside the decode function saying the string 
+          // value cannot be decoded
+          let valueToDecode = "";
+          if (Array.IsArray(value)){
+            // value here is string[],(i.e. param3=20%2C3&param3=40%2C5 => 
+            // ['[20,3]','[40,5]']) so get the first entry (or use all the entries if you prefer
+            // by checking the expanded property from the options object)
+            valueToDecode = value[0];
+          }
+          const decoded = JSON.parse(valueToDecode); 
           if (!isNumericRange(decoded)) throw new Error("Error while decoding");
-          return decoded;
+          return decoded; // <-- [20, 3]
+        },
+        encodingOptions: { // <- optionally specify default options for encoding/decoding
+          expanded: true,
+          test: "test",
         },
       },
-      match: (value) => { // <- specify a way to match for the type key given an unknown value (for error handling)
+      match: (value) => { // <- optianally specify a way to match for the type key given an unknown value (for error handling)
         return isNumericRange(value);
       },
     },
   }
 });
 
-creator() / activator() / untypedActivator() //<-- now have access to custom type/type key
+creator() / activator() //<-- now have access to custom type/type key
 
 ```
 
@@ -364,6 +481,10 @@ creator() / activator() / untypedActivator() //<-- now have access to custom typ
 #### JavaScript(JS) Users
 ```jsx
 
+// Creating custom type keys with this package using only JavaScript is very difficult because
+// javascript does allow you to specify types (niether does it enforce type checking)
+// and any custom type key you create with have the associated type of any, but you can still use
+// the package to create type keys that enforce/validate the query params
 
 function isNumericRange(value) {
   return Array.isArray(value) && value.length === 2 && typeof value[0] === "number" && typeof value[1] === "number";
@@ -372,27 +493,41 @@ function isNumericRange(value) {
 
 const { creator, activator } = createNavManager({
   customTypeKeyMapping: { // <- define custom type keys to encode and decode
-    numericRangeCustomType: {
+    numericRange: {
       category: "custom", // <- always use "custom"
-      sample: [1, 2], // <- sample value of the type
+      defaultValue: [0, 1], // <-- optional default value(used for type setting)
       encodingMap: { // <- specify a way to encode/decode type associated with the custom type key
-        encode: (value) => {
+        encode: (value, options) => { // <-- encode funtion takes in a value matching the type (any) and must return a string or string[]
           return JSON.stringify(value);
         },
-        decode: (value) => { // <- can throw an Error inside the decode function saying the string value cannot be decoded
-          const decoded = JSON.parse(value); 
+        decode: (value, options) => {  // <-- decode funtion takes in a string or string[] and 
+          // must return a value matching the type (any)
+          // <- You can also throw an Error inside the decode function saying the string 
+          // value cannot be decoded
+          let valueToDecode = "";
+          if (Array.IsArray(value)){
+            // value here is string[],(i.e. param3=20%2C3&param3=40%2C5 => 
+            // ['[20,3]','[40,5]']) so get the first entry (or use all the entries if you prefer
+            // by checking the expanded property from the options object)
+            valueToDecode = value[0];
+          }
+          const decoded = JSON.parse(valueToDecode); 
           if (!isNumericRange(decoded)) throw new Error("Error while decoding");
-          return decoded;
+          return decoded; // <-- [20, 3]
+        },
+        encodingOptions: { // <- optionally specify default options for encoding/decoding
+          expanded: true,
+          test: "test",
         },
       },
-      match: (value) => { // <- specify a way to match for the type key given an unknown value (for error handling)
+      match: (value) => { // <- optianally specify a way to match for the type key given an unknown value (for error handling)
         return isNumericRange(value);
       },
     },
   }
 });
 
-creator() / activator() / untypedActivator() //<-- now have access to custom type/type key
+creator() / activator() //<-- now have access to custom type/type key
 
 ```
 
@@ -400,13 +535,13 @@ creator() / activator() / untypedActivator() //<-- now have access to custom typ
 
 - getQueryString(newParams, options?)
   - Args
-    - newParams: Object containing the new values for each param key of the associated route key, null will remove an existing param
+    - newParams: Object containing the new values for each param key of the associated route key, a value of null will remove an existing param if it present in the current url query string
       - e.g. { param3: [12] } <- param3 will be set to param3=12 in the query string
     - options: Object containing one of the following options
       - full: (optional boolean) Specify whether to include the '?' in the query string
       - replaceAllParams: (optional boolean) Specify whether to replace all current query params
       - keyOrder: (optional object) Specify the order in which the query params associated with the route key will appear in the query string
-        - e.g. { param1: 4, param2: 2 } <- param2 will appear before param1 in the string as it has a lower number
+        - e.g. { param1: 4, param2: 2 } <- param2 will appear before param1 in the string as it has a lower order number
    - Returns: the query string
 - getQueryParams(options?)
   - Args

@@ -101,12 +101,12 @@ const { creator,
 
 // activator function helps to determine the corresponding type key given the type of the route keys and their params keys
 const routeMapping = activator
-<RouteMapping>
+// <RouteMapping>
 ({
   route1: {
     typeKeyMapping: {
       numbers: "numberArray", // <-- param key : type key (mapping)
-      focus: "string",
+      focus: "stringRecord",
       display: "booleanRecord",
       names: "stringArray",
     },
