@@ -61,7 +61,7 @@ function isCustomRecordType(
 }
 
 const { creator, 
-  activator,
+  activator
 } = createNavManager<{
   myCustomRecord: Record<string, number | string | boolean>;
 },{
@@ -101,12 +101,12 @@ const { creator,
 
 // activator function helps to determine the corresponding type key given the type of the route keys and their params keys
 const routeMapping = activator
-// <RouteMapping>
+<RouteMapping>
 ({
   route1: {
     typeKeyMapping: {
       numbers: "numberArray", // <-- param key : type key (mapping)
-      focus: "stringRecord",
+      focus: "stringEnum",
       display: "booleanRecord",
       names: "stringArray",
     },
@@ -119,6 +119,9 @@ const routeMapping = activator
       names: {
         separator: "*",
         expanded: true,
+      },
+      focus: {
+        enumType: Object.values(PageRoutingData).map((v) => v.key),
       },
     }
   },
