@@ -118,7 +118,7 @@ const routeMapping = activator
       },
       names: {
         separator: "*",
-        expanded: true,
+        expanded: false,
       },
       focus: {
         enumType: Object.values(PageRoutingData).map((v) => v.key),
