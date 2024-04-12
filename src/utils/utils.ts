@@ -186,11 +186,12 @@ export function findTypeKey(
 function decodeAndMatch(
   input: string,
   decodeFunction: (
-    value: string) => unknown,
-  matchFunction: (value: unknown) => boolean
+    value: string, options?: unknown) => unknown,
+  matchFunction: (value: unknown) => boolean,
+  options: unknown = {},
 ) {
   try {
-    const decoded = decodeFunction(input);
+    const decoded = decodeFunction(input, options);
     return matchFunction(decoded);
   } catch (e) {
     return false;
@@ -215,7 +216,7 @@ export function findTypeKeyOfString(
     })
     .filter(([, value]) => value.match !== undefined)
     .find(([, value]) => {
-      return decodeAndMatch(input, value.encodingMap.decode, value.match!);
+      return decodeAndMatch(input, value.encodingMap.decode, value.match!, value.encodingMap.encodingOptions ?? {});
     });
 
   if (foundSimpleMatch) {
@@ -233,7 +234,7 @@ export function findTypeKeyOfString(
     })
     .filter(([, value]) => value.match !== undefined)
     .find(([, value]) => {
-      return decodeAndMatch(input, value.encodingMap.decode, value.match!);
+      return decodeAndMatch(input, value.encodingMap.decode, value.match!, value.encodingMap.encodingOptions ?? {});
     });
 
   if (foundComplexMatch) {
@@ -251,7 +252,7 @@ export function findTypeKeyOfString(
     })
     .filter(([, value]) => value.match !== undefined)
     .find(([, value]) => {
-      return decodeAndMatch(input, value.encodingMap.decode, value.match!);
+      return decodeAndMatch(input, value.encodingMap.decode, value.match!, value.encodingMap.encodingOptions ?? {});
     });
 
   if (foundCustomMatch) {

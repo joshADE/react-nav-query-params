@@ -286,9 +286,13 @@ function ReadingParams(){
 
     // url: localhost:3000/route1?param1=%7B%22one%22%3Atrue%7D&param2=three
 
+    const queryParams = useMemo(() => {
+      return getQueryParamsRoute1();
+    },[getQueryParamsRoute1])
+
     console.log(
       "Value of param2 query param is 'two': ",
-      getQueryParamsRoute1().values?.param2 === "two") //<-- false
+     queryParams.values?.param2 === "two") //<-- false
 
     // getQueryParamsRoute1 function will get the query params that 
     // are associated with the 'route1' route key which is mapped to the 
@@ -465,7 +469,8 @@ const { creator, activator } = createNavManager<{
           test: "test",
         },
       },
-      match: (value) => { // <- optianally specify a way to match for the type key given an unknown value (for error handling)
+      match: (value, options) => { // <- optianally specify a way to match for the type key given an unknown value (for error handling)
+      // the options here are the defaults specified in the encodingOptions above not the options passed to the param key
         return isNumericRange(value);
       },
     },
@@ -519,7 +524,8 @@ const { creator, activator } = createNavManager({
           test: "test",
         },
       },
-      match: (value) => { // <- optianally specify a way to match for the type key given an unknown value (for error handling)
+      match: (value, options) => { // <- optianally specify a way to match for the type key given an unknown value (for error handling)
+      // the options here are the defaults specified in the encodingOptions above not the options passed to the param key
         return isNumericRange(value);
       },
     },
