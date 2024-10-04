@@ -301,6 +301,7 @@ export default <
                 const paramOptions = routeOptions?.[paramKey as keyof typeof routeOptions];
                 const values = typeKeyProps.encodingMap.encode(typedValue, paramOptions ?? typeKeyProps.encodingMap.encodingOptions);
                 if (Array.isArray(values)) {
+                  params.delete(paramKey.toString());
                   values.forEach((value) => {
                     params.append(
                       paramKey.toString(),
