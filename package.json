@@ -1,6 +1,6 @@
 {
   "name": "react-nav-query-params",
-  "version": "0.0.9",
+  "version": "0.1.1",
   "description": "A react library for easily managing typed url query parameters.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -26,10 +26,9 @@
   "files": [
     "dist"
   ],
-  "dependencies": {},
-  "peerDependencies": {
-    "react": ">=18.2.0",
-    "react-dom": ">=18.2.0"
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "react": "^18.2.0",
